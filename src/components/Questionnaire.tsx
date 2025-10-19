@@ -627,7 +627,7 @@ export default function Questionnaire({
           </div>
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-[hsl(var(--color-foreground))]">
-              Constraints & success metrics (optional)
+              Constraints, success metrics & other notes (optional)
             </Label>
             <Textarea
               value={constraints}

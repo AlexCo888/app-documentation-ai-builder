@@ -17,6 +17,7 @@ import { ArrowRight, Loader2, RefreshCw, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import type { Answers } from '@/lib/types';
+import { IntroModal } from '@/components/IntroModal';
 
 const DEFAULT_MODEL = process.env.NEXT_PUBLIC_DEFAULT_MODEL || 'openai/gpt-5';
 
@@ -78,6 +79,8 @@ export default function Page() {
 
   return (
     <div className="flex flex-1 flex-col gap-12 pb-16">
+      <IntroModal />
+
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <div className="glass-panel relative overflow-hidden rounded-[calc(var(--radius-lg)+0.8rem)] p-8 md:p-10">
           <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top_left,hsl(var(--color-primary)/0.22),transparent_55%)] opacity-70 blur-2xl" />
