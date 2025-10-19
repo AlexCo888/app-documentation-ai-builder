@@ -29,8 +29,9 @@ export async function POST(req: NextRequest) {
         { name: 'MCP.md', content: mcpDoc }
       ]
     });
-  } catch (e: any) {
-    console.error(e);
-    return NextResponse.json({ ok: false, error: e?.message || 'Unknown error' }, { status: 500 });
+  } catch (error: unknown) {
+    console.error(error);
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 }
