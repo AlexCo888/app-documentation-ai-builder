@@ -69,6 +69,58 @@ const copilotOptions: Array<{ value: IDECopilot; label: string }> = [
 const unitOptions: Array<'jest' | 'vitest' | 'none'> = ['jest', 'vitest', 'none'];
 const e2eOptions: Array<'cypress' | 'playwright' | 'none'> = ['cypress', 'playwright', 'none'];
 
+type ModelOption = {
+  id: string;
+  label: string;
+  provider: string;
+};
+
+const CURATED_MODELS: ModelOption[] = [
+  { id: 'openai/gpt-4.1-mini', label: 'OpenAI GPT-4.1 mini', provider: 'OpenAI' },
+  { id: 'openai/gpt-4o-mini', label: 'OpenAI GPT-4o mini', provider: 'OpenAI' },
+  { id: 'openai/gpt-4o', label: 'OpenAI GPT-4o', provider: 'OpenAI' },
+  { id: 'openai/gpt-4o-realtime-preview', label: 'OpenAI GPT-4o Realtime', provider: 'OpenAI' },
+  { id: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
+  { id: 'anthropic/claude-3.5-haiku', label: 'Claude 3.5 Haiku', provider: 'Anthropic' },
+  { id: 'anthropic/claude-3-opus', label: 'Claude 3 Opus', provider: 'Anthropic' },
+  { id: 'google/gemini-2.0-flash', label: 'Gemini 2.0 Flash', provider: 'Google' },
+  { id: 'google/gemini-1.5-pro', label: 'Gemini 1.5 Pro', provider: 'Google' },
+  { id: 'google/gemini-1.5-flash', label: 'Gemini 1.5 Flash', provider: 'Google' },
+  { id: 'mistralai/mistral-large-latest', label: 'Mistral Large Latest', provider: 'Mistral' },
+  { id: 'mistralai/mistral-small-latest', label: 'Mistral Small Latest', provider: 'Mistral' },
+  { id: 'meta-llama/llama-3.1-70b-instruct', label: 'Llama 3.1 70B Instruct', provider: 'Meta' },
+  { id: 'meta-llama/llama-3.1-8b-instruct', label: 'Llama 3.1 8B Instruct', provider: 'Meta' },
+  { id: 'cohere/command-r7b', label: 'Cohere Command R 7B', provider: 'Cohere' },
+  { id: 'cohere/command-r-plus', label: 'Cohere Command R+', provider: 'Cohere' }
+];
+
+const CURATED_MODELS_BY_PROVIDER: Record<string, ModelOption[]> = CURATED_MODELS.reduce(
+  (acc, option) => {
+    if (!acc[option.provider]) acc[option.provider] = [];
+    acc[option.provider].push(option);
+    return acc;
+  },
+  {} as Record<string, ModelOption[]>
+);
+
+Object.values(CURATED_MODELS_BY_PROVIDER).forEach((list) =>
+  list.sort((a, b) => a.label.localeCompare(b.label))
+);
+
+const CURATED_MODEL_LOOKUP = CURATED_MODELS.reduce<Record<string, ModelOption>>((acc, option) => {
+  acc[option.id.toLowerCase()] = option;
+  return acc;
+}, {});
+
+const CURATED_MODEL_IDS = new Set(Object.keys(CURATED_MODEL_LOOKUP));
+const MODEL_ID_REGEX = /^[a-z0-9-]+\/[a-z0-9._-]+$/i;
+
+function cloneModelMap(source: Record<string, ModelOption[]>): Record<string, ModelOption[]> {
+  return Object.fromEntries(
+    Object.entries(source).map(([provider, options]) => [provider, [...options]])
+  );
+}
+
 export default function Questionnaire({
   defaultModel,
   onComplete
@@ -101,7 +153,9 @@ export default function Questionnaire({
 
   const [constraints, setConstraints] = useState('');
   const [model, setModel] = useState<string>(defaultModel);
-  const [modelsByProvider, setModelsByProvider] = useState<Record<string, string[]>>({});
+  const [modelsByProvider, setModelsByProvider] = useState<Record<string, ModelOption[]>>(() =>
+    cloneModelMap(CURATED_MODELS_BY_PROVIDER)
+  );
   const [modelFetchError, setModelFetchError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -125,27 +179,39 @@ export default function Questionnaire({
         const lines = text
           .split('\n')
           .map((line) => line.trim())
-          .filter((line) => line && !line.startsWith('#'));
-        if (!lines.length) throw new Error('no-models');
-        const grouped: Record<string, string[]> = {};
-        for (const id of lines) {
-          const [provider = 'other'] = id.split('/');
-          (grouped[provider] ||= []).push(id);
+          .filter((line) => MODEL_ID_REGEX.test(line) && CURATED_MODEL_IDS.has(line.toLowerCase()));
+
+        if (lines.length === 0) {
+          setModelsByProvider(cloneModelMap(CURATED_MODELS_BY_PROVIDER));
+          setModelFetchError(null);
+          return;
         }
-        if (defaultModel && !lines.includes(defaultModel)) {
-          const [pv = 'custom'] = defaultModel.split('/');
-          grouped[pv] = [defaultModel, ...(grouped[pv] ?? [])];
+
+        const available: Record<string, ModelOption[]> = {};
+        for (const rawId of lines) {
+          const normalized = rawId.toLowerCase();
+          const option = CURATED_MODEL_LOOKUP[normalized];
+          if (!option) continue;
+          if (!available[option.provider]) available[option.provider] = [];
+          if (!available[option.provider].some((existing) => existing.id === option.id)) {
+            available[option.provider].push(option);
+          }
         }
-        setModelsByProvider(
-          Object.fromEntries(
-            Object.entries(grouped).map(([provider, ids]) => [provider, Array.from(new Set(ids))])
-          )
-        );
+
+        const merged: Record<string, ModelOption[]> = {};
+        Object.entries(CURATED_MODELS_BY_PROVIDER).forEach(([provider, fallback]) => {
+          const next = available[provider];
+          merged[provider] = next && next.length
+            ? [...next].sort((a, b) => a.label.localeCompare(b.label))
+            : [...fallback];
+        });
+
+        setModelsByProvider(merged);
         setModelFetchError(null);
       } catch {
         if (cancelled) return;
-        setModelFetchError('Could not load model catalog. Paste your Gateway identifier below.');
-        setModelsByProvider({ recommended: [defaultModel || 'openai/gpt-5'] });
+        setModelsByProvider(cloneModelMap(CURATED_MODELS_BY_PROVIDER));
+        setModelFetchError('Could not sync the live catalog. Showing recommended models.');
       }
     }
     fetchModels();
@@ -173,10 +239,23 @@ export default function Questionnaire({
     return Array.from(signals);
   }, [inferred]);
 
-  const providerEntries = useMemo(
-    () => Object.entries(modelsByProvider).sort(([a], [b]) => a.localeCompare(b)),
-    [modelsByProvider]
-  );
+  const providerEntries = useMemo(() => {
+    return Object.entries(modelsByProvider)
+      .map(([provider, options]) => [
+        provider,
+        [...options].sort((a, b) => a.label.localeCompare(b.label))
+      ] as const)
+      .sort(([a], [b]) => a.localeCompare(b));
+  }, [modelsByProvider]);
+
+  const activeModelDisplay = useMemo(() => {
+    const normalized = model?.toLowerCase();
+    if (normalized && CURATED_MODEL_LOOKUP[normalized]) return CURATED_MODEL_LOOKUP[normalized].label;
+    const defaultNormalized = defaultModel?.toLowerCase();
+    if (defaultNormalized && CURATED_MODEL_LOOKUP[defaultNormalized])
+      return CURATED_MODEL_LOOKUP[defaultNormalized].label;
+    return model || defaultModel;
+  }, [model, defaultModel]);
 
   function next() {
     setStep((current) => Math.min(4, current + 1));
@@ -404,7 +483,7 @@ export default function Questionnaire({
                 Vercel AI Gateway model
               </Label>
               <Badge variant="outline" className="bg-[hsl(var(--color-primary)/0.18)] text-[hsl(var(--color-primary))]">
-                {model || defaultModel}
+                {activeModelDisplay}
               </Badge>
             </div>
             <p className="text-xs text-[hsl(var(--color-muted-foreground))]">
@@ -412,25 +491,26 @@ export default function Questionnaire({
             </p>
             <ScrollArea className="max-h-[220px] rounded-2xl border border-[hsl(var(--color-border)/0.4)] bg-[hsl(var(--color-card)/0.6)] p-4">
               <div className="space-y-3">
-                {providerEntries.map(([provider, ids]) => (
+                {providerEntries.map(([provider, options]) => (
                   <div key={provider} className="space-y-2">
                     <p className="text-[0.65rem] uppercase tracking-[0.28em] text-[hsl(var(--color-muted-foreground))]">
                       {provider}
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {ids.slice(0, 5).map((id) => (
+                      {options.slice(0, 6).map((option) => (
                         <button
-                          key={id}
+                          key={option.id}
                           type="button"
-                          onClick={() => setModel(id)}
+                          onClick={() => setModel(option.id)}
                           className={cn(
-                            'rounded-full border px-4 py-1.5 text-xs font-semibold',
-                            model === id
+                            'rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors duration-150',
+                            model.toLowerCase() === option.id.toLowerCase()
                               ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.2)] text-[hsl(var(--color-primary))]'
-                              : 'border-[hsl(var(--color-border)/0.4)] text-[hsl(var(--color-muted-foreground))]'
+                              : 'border-[hsl(var(--color-border)/0.4)] text-[hsl(var(--color-muted-foreground))] hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:text-[hsl(var(--color-foreground))]'
                           )}
+                          title={option.id}
                         >
-                          {id}
+                          {option.label}
                         </button>
                       ))}
                     </div>
