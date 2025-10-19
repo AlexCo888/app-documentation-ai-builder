@@ -1,26 +1,38 @@
+/* Tailwind v4 single import. */
 @import "tailwindcss";
 
+/* Minimal CSS variables compatible with shadcn/ui v4 docs. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(0 0% 3.9%);
+  --muted: hsl(0 0% 96.1%);
+  --muted-foreground: hsl(0 0% 45%);
+  --border: hsl(0 0% 89.8%);
+  --primary: hsl(221 83% 53%); /* blue-600ish */
+  --primary-foreground: hsl(0 0% 100%);
+  --ring: hsl(221 83% 53%);
 }
 
+/* Tailwind v4 theme mapping (simplified). */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  height: 100%;
+  background: var(--color-background);
+  color: var(--color-foreground);
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.container {
+  margin: 0 auto;
+  padding: 1rem;
+  max-width: 960px;
 }
