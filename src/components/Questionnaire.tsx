@@ -6,13 +6,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn, inferSelectionsFromIdea } from '@/lib/utils';
 import type { Answers, FrameworkChoice, DBChoice, IDECopilot } from '@/lib/types';
 import type { LucideIcon } from 'lucide-react';
-import { ArrowRight, CircuitBoard, Cpu, Database, Rocket, Sparkles, Workflow } from 'lucide-react';
+import { ArrowRight, CircuitBoard, Cpu, Database, Rocket, Sparkles, Workflow, Check } from 'lucide-react';
 
 type AuthChoice = 'none' | 'supabase_auth' | 'authjs' | 'clerk' | 'other';
 
@@ -146,7 +145,7 @@ export default function Questionnaire({
       } catch {
         if (cancelled) return;
         setModelFetchError('Could not load model catalog. Paste your Gateway identifier below.');
-        setModelsByProvider({ recommended: [defaultModel || 'openai/gpt-4o'] });
+        setModelsByProvider({ recommended: [defaultModel || 'openai/gpt-5'] });
       }
     }
     fetchModels();
@@ -254,7 +253,7 @@ export default function Questionnaire({
             value={idea}
             onChange={(event) => setIdea(event.target.value)}
             placeholder="Example: Build a compliance-ready founder dashboard with SOC2 auth, AI changelog summaries, and Neon-backed analytics."
-            className="min-h-[160px] resize-none rounded-3xl border-none bg-[hsl(var(--color-muted)/0.4)] p-6 text-base focus-visible:ring-[hsl(var(--color-primary)/0.25)]"
+            className="min-h-[160px] resize-none rounded-3xl border-none bg-[hsl(var(--color-muted)/0.4)] p-6 text-base text-[hsl(var(--color-foreground))] placeholder:text-[hsl(var(--color-muted-foreground))] focus-visible:ring-[hsl(var(--color-primary)/0.25)]"
           />
           {ideaSignals.length > 0 && (
             <div className="flex flex-wrap gap-2 text-xs">
@@ -275,22 +274,25 @@ export default function Questionnaire({
       {step === 2 && (
         <section className="space-y-8 rounded-[calc(var(--radius-lg)+0.75rem)] border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.8)] p-8 shadow-[0_25px_60px_-40px_hsl(var(--shadow))] backdrop-blur-xl">
           <div className="grid gap-4 lg:grid-cols-3">
-            {frameworkOptions.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setFramework(option.value)}
-                className={cn(
-                  'flex h-full flex-col justify-between rounded-3xl border p-5 text-left transition-all',
-                  framework === option.value
-                    ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.15)] text-[hsl(var(--color-primary-foreground))]'
-                    : 'border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)]'
-                )}
-              >
-                <span className="text-base font-semibold">{option.label}</span>
-                <span className="mt-3 text-xs text-[hsl(var(--color-muted-foreground))]">{option.note}</span>
-              </button>
-            ))}
+            {frameworkOptions.map((option) => {
+              const isActive = framework === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setFramework(option.value)}
+                  className={cn(
+                    'flex h-full cursor-pointer flex-col justify-between rounded-3xl border p-5 text-left transition-all duration-300 hover:-translate-y-1 hover:border-[hsl(var(--color-ring-soft)/0.5)] hover:shadow-[0_26px_48px_-30px_hsl(var(--color-ring-soft))]',
+                    isActive
+                      ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.16)] text-[hsl(var(--color-foreground))] shadow-[0_30px_55px_-35px_hsl(var(--color-primary))]'
+                      : 'border-[hsl(var(--color-border)/0.45)] bg-[hsl(var(--color-card)/0.7)] text-[hsl(var(--color-foreground))]'
+                  )}
+                >
+                  <span className="text-base font-semibold">{option.label}</span>
+                  <span className="mt-3 text-xs text-[hsl(var(--color-muted-foreground))]">{option.note}</span>
+                </button>
+              );
+            })}
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
@@ -301,10 +303,10 @@ export default function Questionnaire({
                   type="button"
                   onClick={() => setTailwind((prev) => !prev)}
                   className={cn(
-                    'rounded-full border px-3 py-1.5',
+                    'rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-200',
                     tailwind
                       ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.18)] text-[hsl(var(--color-primary))]'
-                      : 'border-[hsl(var(--color-border)/0.6)] text-[hsl(var(--color-muted-foreground))]'
+                      : 'border-[hsl(var(--color-border)/0.6)] text-[hsl(var(--color-muted-foreground))] hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:text-[hsl(var(--color-foreground))]'
                   )}
                 >
                   Tailwind
@@ -313,10 +315,10 @@ export default function Questionnaire({
                   type="button"
                   onClick={() => setShadcn((prev) => !prev)}
                   className={cn(
-                    'rounded-full border px-3 py-1.5',
+                    'rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-200',
                     shadcn
                       ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.18)] text-[hsl(var(--color-primary))]'
-                      : 'border-[hsl(var(--color-border)/0.6)] text-[hsl(var(--color-muted-foreground))]'
+                      : 'border-[hsl(var(--color-border)/0.6)] text-[hsl(var(--color-muted-foreground))] hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:text-[hsl(var(--color-foreground))]'
                   )}
                 >
                   shadcn/ui
@@ -334,7 +336,7 @@ export default function Questionnaire({
               <div className="space-y-2 rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] p-5">
                 <Label className="text-sm font-semibold text-[hsl(var(--color-foreground))]">Database</Label>
                 <Select value={db} onValueChange={(value) => setDb(value as DBChoice)}>
-                  <SelectTrigger className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)]">
+                  <SelectTrigger className="w-full rounded-2xl">
                     <SelectValue placeholder="Pick one" />
                   </SelectTrigger>
                   <SelectContent>
@@ -349,7 +351,7 @@ export default function Questionnaire({
               <div className="space-y-2 rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] p-5">
                 <Label className="text-sm font-semibold text-[hsl(var(--color-foreground))]">Auth</Label>
                 <Select value={auth} onValueChange={(value) => setAuth(value as AuthChoice)}>
-                  <SelectTrigger className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)]">
+                  <SelectTrigger className="w-full rounded-2xl">
                     <SelectValue placeholder="Auth option" />
                   </SelectTrigger>
                   <SelectContent>
@@ -364,19 +366,30 @@ export default function Questionnaire({
               <button
                 type="button"
                 onClick={() => setUseVercel((prev) => !prev)}
+                aria-pressed={useVercel}
                 className={cn(
-                  'flex items-center justify-between rounded-3xl border px-5 py-4 text-left sm:col-span-2',
+                  'flex cursor-pointer items-center justify-between rounded-3xl border px-5 py-4 text-left transition-all duration-300 sm:col-span-2 hover:-translate-y-0.5 hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:shadow-[0_22px_42px_-30px_hsl(var(--color-ring-soft))]',
                   useVercel
-                    ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.15)] text-[hsl(var(--color-primary))]'
-                    : 'border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] text-[hsl(var(--color-muted-foreground))]'
+                    ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.16)] text-[hsl(var(--color-primary))]'
+                    : 'border-[hsl(var(--color-border)/0.55)] bg-[hsl(var(--color-card)/0.65)] text-[hsl(var(--color-muted-foreground))]'
                 )}
               >
-                <span>Deploy on Vercel</span>
-                <Checkbox
-                  checked={useVercel}
-                  onCheckedChange={(checked) => setUseVercel(checked === true)}
-                  className="pointer-events-none size-5 rounded-md border-[hsl(var(--color-border)/0.8)] data-[state=checked]:border-[hsl(var(--color-primary))] data-[state=checked]:bg-[hsl(var(--color-primary))]"
-                />
+                <div>
+                  <p className="text-sm font-semibold tracking-wide">Deploy on Vercel</p>
+                  <p className="text-xs text-[hsl(var(--color-muted-foreground))]">
+                    Toggle to include Edge config, env matrix, and preview strategy.
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    'inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.28em]',
+                    useVercel
+                      ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.25)] text-[hsl(var(--color-primary))]'
+                      : 'border-[hsl(var(--color-border)/0.7)] bg-[hsl(var(--color-muted)/0.4)] text-[hsl(var(--color-muted-foreground))]'
+                  )}
+                >
+                  {useVercel ? 'Enabled' : 'Optional'}
+                </span>
               </button>
             </div>
           </div>
@@ -428,7 +441,7 @@ export default function Questionnaire({
             <Input
               value={model}
               onChange={(event) => setModel(event.target.value)}
-              placeholder="openai/gpt-4o-mini, anthropic/claude-3.5-sonnet, ..."
+              placeholder="openai/gpt-5, anthropic/claude-4.5-sonnet, ..."
               className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.35)]"
             />
             {modelFetchError && <p className="text-xs text-red-400">{modelFetchError}</p>}
@@ -436,10 +449,10 @@ export default function Questionnaire({
               type="button"
               onClick={() => setUseAISDK((prev) => !prev)}
               className={cn(
-                'w-fit rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.28em]',
+                'w-fit cursor-pointer rounded-full border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] transition-colors duration-200',
                 useAISDK
                   ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.18)] text-[hsl(var(--color-primary))]'
-                  : 'border-[hsl(var(--color-border)/0.6)] text-[hsl(var(--color-muted-foreground))]'
+                  : 'border-[hsl(var(--color-border)/0.6)] text-[hsl(var(--color-muted-foreground))] hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:text-[hsl(var(--color-foreground))]'
               )}
             >
               {useAISDK ? 'AI SDK enabled' : 'Skip AI SDK'}
@@ -453,31 +466,58 @@ export default function Questionnaire({
                 <p className="text-sm font-semibold text-[hsl(var(--color-foreground))]">Companion agents</p>
               </div>
               {[
-                { label: 'QA engineer', value: qaAgent, toggle: () => setQaAgent((prev) => !prev) },
-                { label: 'Architecture coach', value: archAgent, toggle: () => setArchAgent((prev) => !prev) },
-                { label: 'IDE optimizer', value: ideAgent, toggle: () => setIdeAgent((prev) => !prev) }
+                {
+                  label: 'QA engineer',
+                  detail: 'Recommends coverage, linting, and regression tooling.',
+                  active: qaAgent,
+                  toggle: () => setQaAgent((prev) => !prev)
+                },
+                {
+                  label: 'Architecture coach',
+                  detail: 'Suggests folder topologies, scaling patterns, and guardrails.',
+                  active: archAgent,
+                  toggle: () => setArchAgent((prev) => !prev)
+                },
+                {
+                  label: 'IDE optimizer',
+                  detail: 'Configs extensions, keymaps, and CLI ergonomics.',
+                  active: ideAgent,
+                  toggle: () => setIdeAgent((prev) => !prev)
+                }
               ].map((agent) => (
                 <button
                   key={agent.label}
                   type="button"
                   onClick={agent.toggle}
+                  aria-pressed={agent.active}
                   className={cn(
-                    'flex items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm',
-                    agent.value
+                    'flex cursor-pointer items-center justify-between gap-4 rounded-2xl border px-4 py-4 text-left text-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:shadow-[0_26px_48px_-32px_hsl(var(--color-ring-soft))]',
+                    agent.active
                       ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.15)] text-[hsl(var(--color-primary))]'
                       : 'border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] text-[hsl(var(--color-muted-foreground))]'
                   )}
                 >
-                  {agent.label}
-                  <Checkbox
-                    checked={agent.value}
-                    onCheckedChange={agent.toggle}
-                    className="pointer-events-none size-5 rounded-md border-[hsl(var(--color-border)/0.8)] data-[state=checked]:border-[hsl(var(--color-primary))] data-[state=checked]:bg-[hsl(var(--color-primary))]"
-                  />
+                  <div className="flex flex-col gap-1">
+                    <span className="font-semibold text-[hsl(var(--color-foreground))]">{agent.label}</span>
+                    <span className="text-[0.7rem] text-[hsl(var(--color-muted-foreground))]">
+                      {agent.detail}
+                    </span>
+                  </div>
+                  <span
+                    className={cn(
+                      'grid size-8 place-items-center rounded-full border transition-colors',
+                      agent.active
+                        ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.2)] text-[hsl(var(--color-primary))]'
+                        : 'border-[hsl(var(--color-border)/0.7)] text-[hsl(var(--color-muted-foreground))]'
+                    )}
+                    aria-hidden="true"
+                  >
+                    {agent.active && <Check className="size-4" />}
+                  </span>
                 </button>
               ))}
               <Select value={ide} onValueChange={(value) => setIde(value as IDECopilot)}>
-                <SelectTrigger className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)]">
+                <SelectTrigger className="w-full rounded-2xl">
                   <SelectValue placeholder="IDE / copilot" />
                 </SelectTrigger>
                 <SelectContent>
@@ -499,7 +539,7 @@ export default function Questionnaire({
                 type="button"
                 onClick={() => setTesting((prev) => !prev)}
                 className={cn(
-                  'rounded-2xl border px-4 py-3 text-left text-sm',
+                  'rounded-2xl border px-4 py-3 text-left text-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:shadow-[0_22px_44px_-30px_hsl(var(--color-ring-soft))]',
                   testing
                     ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.15)] text-[hsl(var(--color-primary))]'
                     : 'border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] text-[hsl(var(--color-muted-foreground))]'
@@ -510,9 +550,9 @@ export default function Questionnaire({
               {testing && (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <Select value={unit} onValueChange={(value) => setUnit(value as typeof unit)}>
-                    <SelectTrigger className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)]">
-                      <SelectValue placeholder="Unit testing" />
-                    </SelectTrigger>
+                  <SelectTrigger className="w-full rounded-2xl">
+                    <SelectValue placeholder="Unit testing" />
+                  </SelectTrigger>
                     <SelectContent>
                       {unitOptions.map((option) => (
                         <SelectItem key={option} value={option}>
@@ -522,9 +562,9 @@ export default function Questionnaire({
                     </SelectContent>
                   </Select>
                   <Select value={e2e} onValueChange={(value) => setE2e(value as typeof e2e)}>
-                    <SelectTrigger className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)]">
-                      <SelectValue placeholder="E2E testing" />
-                    </SelectTrigger>
+                  <SelectTrigger className="w-full rounded-2xl">
+                    <SelectValue placeholder="E2E testing" />
+                  </SelectTrigger>
                     <SelectContent>
                       {e2eOptions.map((option) => (
                         <SelectItem key={option} value={option}>

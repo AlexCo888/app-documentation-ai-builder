@@ -15,6 +15,9 @@
   --card: 0 0% 100%;
   --card-foreground: 222 47% 11%;
   --shadow: 222 46% 30%;
+  --surface-soft: 220 70% 97%;
+  --surface-strong: 227 55% 18%;
+  --ring-soft: 220 92% 86%;
 }
 
 .dark {
@@ -32,6 +35,9 @@
   --card: 232 43% 10%;
   --card-foreground: 220 20% 92%;
   --shadow: 210 44% 6%;
+  --surface-soft: 232 38% 13%;
+  --surface-strong: 228 33% 8%;
+  --ring-soft: 259 94% 68%;
 }
 
 @theme inline {
@@ -47,6 +53,9 @@
   --color-ring: var(--ring);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-strong: var(--surface-strong);
+  --color-ring-soft: var(--ring-soft);
   --shadow-elevated: 0 30px 60px hsl(var(--shadow) / 0.35);
   --shadow-floating: 0 20px 80px hsl(var(--ring) / 0.25);
   --radius-lg: 1.4rem;
@@ -109,4 +118,83 @@ body::before {
   box-shadow: var(--shadow-elevated);
   backdrop-filter: blur(24px);
   border-radius: var(--radius-lg);
+}
+
+::selection {
+  background: hsl(var(--color-primary) / 0.25);
+  color: hsl(var(--color-primary-foreground));
+}
+
+@layer base {
+  .prose {
+    --tw-prose-body: hsl(var(--color-foreground));
+    --tw-prose-headings: hsl(var(--color-foreground));
+    --tw-prose-links: hsl(var(--color-primary));
+    --tw-prose-bold: hsl(var(--color-foreground));
+    --tw-prose-quotes: hsl(var(--color-foreground));
+    --tw-prose-code: hsl(var(--color-foreground));
+  }
+
+  .prose h1,
+  .prose h2,
+  .prose h3 {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  .prose pre {
+    background: hsl(var(--color-surface-strong) / 0.95);
+    border: 1px solid hsl(var(--color-ring-soft) / 0.3);
+    box-shadow: 0 25px 60px -40px hsl(var(--color-ring-soft) / 0.6);
+    border-radius: var(--radius-md);
+    padding: 1.4rem;
+    overflow-x: auto;
+  }
+
+  .prose code {
+    font-size: 0.92em;
+    word-break: break-word;
+    background: hsl(var(--color-surface-soft) / 0.75);
+    border-radius: 0.5rem;
+    padding: 0.2rem 0.45rem;
+  }
+
+  .prose ul,
+  .prose ol {
+    padding-left: 1.25rem;
+  }
+
+  .prose table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid hsl(var(--color-ring-soft) / 0.3);
+  }
+
+  .prose th,
+  .prose td {
+    border: 1px solid hsl(var(--color-ring-soft) / 0.15);
+    padding: 0.65rem 0.8rem;
+    text-align: left;
+  }
+}
+
+@layer utilities {
+  .scrollbar-slim {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--color-ring-soft) / 0.5) transparent;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-thumb {
+    background: hsl(var(--color-ring-soft) / 0.55);
+    border-radius: 9999px;
+  }
+
+  .scrollbar-slim::-webkit-scrollbar-track {
+    background: transparent;
+  }
 }

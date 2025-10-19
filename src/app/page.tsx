@@ -18,7 +18,7 @@ import { cn } from '@/lib/utils';
 
 import type { Answers } from '@/lib/types';
 
-const DEFAULT_MODEL = process.env.NEXT_PUBLIC_DEFAULT_MODEL || 'openai/gpt-4o';
+const DEFAULT_MODEL = process.env.NEXT_PUBLIC_DEFAULT_MODEL || 'openai/gpt-5';
 
 type FileOut = { name: string; content: string };
 type GenerateResponse = { ok: boolean; files?: FileOut[]; error?: string };
@@ -213,24 +213,37 @@ export default function Page() {
                   return (
                     <Button
                       key={file.name}
-                      variant={isActive ? 'default' : 'ghost'}
+                      variant="ghost"
                       className={cn(
-                        'justify-between rounded-xl border border-[hsl(var(--color-border)/0.6)] px-4 py-5 text-left text-sm font-semibold transition-all',
-                        isActive
-                          ? 'bg-[hsl(var(--color-primary))] text-[hsl(var(--color-primary-foreground))]'
-                          : 'bg-[hsl(var(--color-card))] text-[hsl(var(--color-foreground))]'
+                        'group flex w-full cursor-pointer justify-between rounded-xl border px-4 py-4 text-left text-sm font-semibold transition-all duration-300',
+                        'bg-[hsl(var(--color-card)/0.85)] border-[hsl(var(--color-border)/0.45)] text-[hsl(var(--color-foreground))] hover:border-[hsl(var(--color-ring-soft)/0.6)] hover:bg-[hsl(var(--color-surface-soft)/0.55)] hover:text-[hsl(var(--color-foreground))] hover:shadow-[0_18px_42px_-28px_hsl(var(--color-ring-soft))]',
+                        isActive &&
+                          'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.18)] text-[hsl(var(--color-primary-foreground))] shadow-[0_24px_55px_-30px_hsl(var(--color-primary))]'
                       )}
                       onClick={() => setSelectedFile(file)}
                     >
-                      <span>{file.name}</span>
-                      <ArrowRight className="size-4 opacity-80" aria-hidden="true" />
+                      <span className="truncate">{file.name}</span>
+                      <ArrowRight
+                        className={cn(
+                          'size-4 transition-transform duration-300',
+                          isActive
+                            ? 'text-[hsl(var(--color-primary-foreground))]'
+                            : 'text-[hsl(var(--color-muted-foreground))]',
+                          'group-hover:translate-x-1'
+                        )}
+                        aria-hidden="true"
+                      />
                     </Button>
                   );
                 })}
               </div>
             </CardContent>
             <CardContent className="border-t border-[hsl(var(--color-border)/0.6)] px-4 py-6">
-              <Button variant="ghost" className="w-full justify-center gap-2" onClick={reset}>
+              <Button
+                variant="ghost"
+                className="w-full cursor-pointer justify-center gap-2 rounded-xl border border-[hsl(var(--color-border)/0.4)] bg-[hsl(var(--color-card)/0.85)] py-4 text-sm font-semibold text-[hsl(var(--color-foreground))] transition-all hover:border-[hsl(var(--color-ring-soft)/0.55)] hover:bg-[hsl(var(--color-surface-soft)/0.6)] hover:text-[hsl(var(--color-foreground))]"
+                onClick={reset}
+              >
                 <RefreshCw className="size-4" aria-hidden="true" />
                 Start a new scenario
               </Button>
@@ -249,7 +262,7 @@ export default function Page() {
               </div>
               <DownloadButton filename={selectedFile.name} content={selectedFile.content} />
             </CardHeader>
-            <CardContent className="max-h-[70vh] overflow-y-auto px-8 py-8">
+            <CardContent className="max-h-[70vh] overflow-y-auto px-6 py-6 md:px-8 md:py-8 scrollbar-slim">
               <Markdown content={selectedFile.content} />
             </CardContent>
           </Card>
