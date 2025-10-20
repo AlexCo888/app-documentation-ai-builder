@@ -515,20 +515,20 @@ export default function Questionnaire({
                     <ChevronDown className="size-4 opacity-70" aria-hidden="true" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-[min(320px,90vw)] max-h-[360px] overflow-x-hidden rounded-2xl border border-[hsl(var(--color-border)/0.45)] bg-[hsl(var(--color-card)/0.96)] shadow-[0_35px_80px_-40px_hsl(var(--color-ring-soft))] backdrop-blur-2xl p-0">
-                  <ScrollArea className="max-h-[340px] pr-1">
+                <DropdownMenuContent className="w-[min(340px,92vw)] sm:w-[min(420px,90vw)] md:w-[min(560px,85vw)] xl:w-[min(680px,70vw)] max-h-[360px] overflow-x-hidden rounded-2xl border border-[hsl(var(--color-border)/0.45)] bg-[hsl(var(--color-card)/0.96)] shadow-[0_35px_80px_-40px_hsl(var(--color-ring-soft))] backdrop-blur-2xl p-0">
+                  <ScrollArea className="max-h-[340px] pr-1 md:pr-2">
                     <div className="space-y-3">
                       {providerEntries.map(([provider, options]) => (
                         <DropdownMenuGroup key={provider} className="space-y-1 px-1">
                           <DropdownMenuLabel className="text-[0.65rem] uppercase tracking-[0.28em] text-[hsl(var(--color-muted-foreground))]">
                             {provider}
                           </DropdownMenuLabel>
-                          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                          <div className="grid grid-cols-1 gap-1 md:grid-cols-2 md:gap-2">
                             {options.map((option) => (
                               <DropdownMenuItem
                                 key={option.id}
                                 className={cn(
-                                  'w-full cursor-pointer rounded-lg border border-transparent px-3 py-2 text-sm font-medium transition-colors duration-150',
+                                  'w-full cursor-pointer rounded-lg border border-transparent px-3 py-2 text-sm font-medium leading-tight transition-colors duration-150',
                                   model.toLowerCase() === option.id.toLowerCase()
                                     ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.12)] text-[hsl(var(--color-primary))]'
                                     : 'hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:bg-[hsl(var(--color-surface-soft)/0.65)]'
@@ -536,8 +536,8 @@ export default function Questionnaire({
                                 onSelect={() => setModel(option.id)}
                               >
                                 <div className="flex flex-col">
-                                  <span className="truncate">{option.label}</span>
-                                  <span className="text-[0.65rem] text-[hsl(var(--color-muted-foreground))]">
+                                  <span className="whitespace-normal break-words">{option.label}</span>
+                                  <span className="break-all text-[0.65rem] text-[hsl(var(--color-muted-foreground))]">
                                     {option.id}
                                   </span>
                                 </div>
