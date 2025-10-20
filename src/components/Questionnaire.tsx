@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn, inferSelectionsFromIdea } from '@/lib/utils';
 import type { Answers, FrameworkChoice, DBChoice, IDECopilot } from '@/lib/types';
 import type { LucideIcon } from 'lucide-react';
-import { ArrowRight, CircuitBoard, Cpu, Database, Rocket, Sparkles, Workflow, Check } from 'lucide-react';
+import { ArrowRight, CircuitBoard, Cpu, Database, Rocket, Sparkles, Workflow, Check, ChevronDown } from 'lucide-react';
 
 type AuthChoice = 'none' | 'supabase_auth' | 'authjs' | 'clerk' | 'other';
 
@@ -76,22 +77,42 @@ type ModelOption = {
 };
 
 const CURATED_MODELS: ModelOption[] = [
-  { id: 'openai/gpt-4.1-mini', label: 'OpenAI GPT-4.1 mini', provider: 'OpenAI' },
-  { id: 'openai/gpt-4o-mini', label: 'OpenAI GPT-4o mini', provider: 'OpenAI' },
-  { id: 'openai/gpt-4o', label: 'OpenAI GPT-4o', provider: 'OpenAI' },
-  { id: 'openai/gpt-4o-realtime-preview', label: 'OpenAI GPT-4o Realtime', provider: 'OpenAI' },
-  { id: 'anthropic/claude-3.5-sonnet', label: 'Claude 3.5 Sonnet', provider: 'Anthropic' },
-  { id: 'anthropic/claude-3.5-haiku', label: 'Claude 3.5 Haiku', provider: 'Anthropic' },
-  { id: 'anthropic/claude-3-opus', label: 'Claude 3 Opus', provider: 'Anthropic' },
-  { id: 'google/gemini-2.0-flash', label: 'Gemini 2.0 Flash', provider: 'Google' },
-  { id: 'google/gemini-1.5-pro', label: 'Gemini 1.5 Pro', provider: 'Google' },
-  { id: 'google/gemini-1.5-flash', label: 'Gemini 1.5 Flash', provider: 'Google' },
-  { id: 'mistralai/mistral-large-latest', label: 'Mistral Large Latest', provider: 'Mistral' },
-  { id: 'mistralai/mistral-small-latest', label: 'Mistral Small Latest', provider: 'Mistral' },
-  { id: 'meta-llama/llama-3.1-70b-instruct', label: 'Llama 3.1 70B Instruct', provider: 'Meta' },
-  { id: 'meta-llama/llama-3.1-8b-instruct', label: 'Llama 3.1 8B Instruct', provider: 'Meta' },
-  { id: 'cohere/command-r7b', label: 'Cohere Command R 7B', provider: 'Cohere' },
-  { id: 'cohere/command-r-plus', label: 'Cohere Command R+', provider: 'Cohere' }
+  { id: 'anthropic/claude-3-haiku-20240307', label: 'Claude 3 Haiku (2024-03-07)', provider: 'Anthropic' },
+  { id: 'anthropic/claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku Latest', provider: 'Anthropic' },
+  { id: 'anthropic/claude-3-5-sonnet-20240620', label: 'Claude 3.5 Sonnet (2024-06-20)', provider: 'Anthropic' },
+  { id: 'anthropic/claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet (2024-10-22)', provider: 'Anthropic' },
+  { id: 'anthropic/claude-3-7-sonnet-20250219', label: 'Claude 3.7 Sonnet (2025-02-19)', provider: 'Anthropic' },
+  { id: 'anthropic/claude-opus-4-20250514', label: 'Claude Opus 4 (2025-05-14)', provider: 'Anthropic' },
+  { id: 'anthropic/claude-sonnet-4', label: 'Claude Sonnet 4', provider: 'Anthropic' },
+  { id: 'anthropic/claude-sonnet-4-0', label: 'Claude Sonnet 4.0', provider: 'Anthropic' },
+  { id: 'anthropic/claude-sonnet-4-5', label: 'Claude Sonnet 4.5', provider: 'Anthropic' },
+  { id: 'anthropic/claude-sonnet-4-20250514', label: 'Claude Sonnet 4 (2025-05-14)', provider: 'Anthropic' },
+  { id: 'cohere/command-a-reasoning-08-2025', label: 'Cohere Command A Reasoning (Aug 2025)', provider: 'Cohere' },
+  { id: 'cohere/command-r-plus', label: 'Cohere Command R+', provider: 'Cohere' },
+  { id: 'deepseek/deepseek-chat', label: 'DeepSeek Chat', provider: 'DeepSeek' },
+  { id: 'deepseek/deepseek-r1', label: 'DeepSeek R1', provider: 'DeepSeek' },
+  { id: 'deepseek/deepseek-reasoner', label: 'DeepSeek Reasoner', provider: 'DeepSeek' },
+  { id: 'google/gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'Google' },
+  { id: 'google/gemini-2.5-flash-image-preview', label: 'Gemini 2.5 Flash (Image Preview)', provider: 'Google' },
+  { id: 'google/gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'Google' },
+  { id: 'google/gemma-3-27b-it', label: 'Gemma 3 27B IT', provider: 'Google' },
+  { id: 'mistral/magistral-small-2506', label: 'Magistral Small 2506', provider: 'Mistral' },
+  { id: 'mistral/mistral-large-latest', label: 'Mistral Large Latest', provider: 'Mistral' },
+  { id: 'mistral/mistral-small-latest', label: 'Mistral Small Latest', provider: 'Mistral' },
+  { id: 'openai/gpt-3.5-turbo', label: 'GPT-3.5 Turbo', provider: 'OpenAI' },
+  { id: 'openai/gpt-4.1', label: 'GPT-4.1', provider: 'OpenAI' },
+  { id: 'openai/gpt-4o', label: 'GPT-4o', provider: 'OpenAI' },
+  { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini', provider: 'OpenAI' },
+  { id: 'openai/gpt-5', label: 'GPT-5', provider: 'OpenAI' },
+  { id: 'openai/gpt-5-mini', label: 'GPT-5 Mini', provider: 'OpenAI' },
+  { id: 'openai/o1', label: 'O1', provider: 'OpenAI' },
+  { id: 'openai/o3-mini', label: 'O3 Mini', provider: 'OpenAI' },
+  { id: 'openai/o4-mini', label: 'O4 Mini', provider: 'OpenAI' },
+  { id: 'perplexity/sonar', label: 'Perplexity Sonar', provider: 'Perplexity' },
+  { id: 'perplexity/sonar-pro', label: 'Perplexity Sonar Pro', provider: 'Perplexity' },
+  { id: 'xai/grok-3', label: 'Grok 3', provider: 'xAI' },
+  { id: 'xai/grok-3-latest', label: 'Grok 3 Latest', provider: 'xAI' },
+  { id: 'xai/grok-4', label: 'Grok 4', provider: 'xAI' }
 ];
 
 const CURATED_MODELS_BY_PROVIDER: Record<string, ModelOption[]> = CURATED_MODELS.reduce(
@@ -486,45 +507,51 @@ export default function Questionnaire({
                 {activeModelDisplay}
               </Badge>
             </div>
-            <p className="text-xs text-[hsl(var(--color-muted-foreground))]">
-              Choose from the live Gateway catalog or paste a custom identifier.
-            </p>
-            <ScrollArea className="max-h-[220px] rounded-2xl border border-[hsl(var(--color-border)/0.4)] bg-[hsl(var(--color-card)/0.6)] p-4">
-              <div className="space-y-3">
-                {providerEntries.map(([provider, options]) => (
-                  <div key={provider} className="space-y-2">
-                    <p className="text-[0.65rem] uppercase tracking-[0.28em] text-[hsl(var(--color-muted-foreground))]">
-                      {provider}
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {options.slice(0, 6).map((option) => (
-                        <button
-                          key={option.id}
-                          type="button"
-                          onClick={() => setModel(option.id)}
-                          className={cn(
-                            'rounded-full border px-4 py-1.5 text-xs font-semibold transition-colors duration-150',
-                            model.toLowerCase() === option.id.toLowerCase()
-                              ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.2)] text-[hsl(var(--color-primary))]'
-                              : 'border-[hsl(var(--color-border)/0.4)] text-[hsl(var(--color-muted-foreground))] hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:text-[hsl(var(--color-foreground))]'
-                          )}
-                          title={option.id}
-                        >
-                          {option.label}
-                        </button>
+            <div className="flex flex-col gap-3 rounded-2xl border border-[hsl(var(--color-border)/0.45)] bg-[hsl(var(--color-card)/0.65)] p-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex w-full cursor-pointer items-center justify-between rounded-xl border border-[hsl(var(--color-border)/0.4)] bg-[hsl(var(--color-surface-soft)/0.6)] px-4 py-3 text-left text-sm font-medium text-[hsl(var(--color-foreground))] transition-colors hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:bg-[hsl(var(--color-surface-soft)/0.75)]">
+                    <span className="truncate">{activeModelDisplay}</span>
+                    <ChevronDown className="size-4 opacity-70" aria-hidden="true" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-[min(320px,90vw)] max-h-[360px] overflow-x-hidden rounded-2xl border border-[hsl(var(--color-border)/0.45)] bg-[hsl(var(--color-card)/0.96)] shadow-[0_35px_80px_-40px_hsl(var(--color-ring-soft))] backdrop-blur-2xl p-0">
+                  <ScrollArea className="max-h-[340px] pr-1">
+                    <div className="space-y-3">
+                      {providerEntries.map(([provider, options]) => (
+                        <DropdownMenuGroup key={provider} className="space-y-1 px-1">
+                          <DropdownMenuLabel className="text-[0.65rem] uppercase tracking-[0.28em] text-[hsl(var(--color-muted-foreground))]">
+                            {provider}
+                          </DropdownMenuLabel>
+                          <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
+                            {options.map((option) => (
+                              <DropdownMenuItem
+                                key={option.id}
+                                className={cn(
+                                  'w-full cursor-pointer rounded-lg border border-transparent px-3 py-2 text-sm font-medium transition-colors duration-150',
+                                  model.toLowerCase() === option.id.toLowerCase()
+                                    ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.12)] text-[hsl(var(--color-primary))]'
+                                    : 'hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:bg-[hsl(var(--color-surface-soft)/0.65)]'
+                                )}
+                                onSelect={() => setModel(option.id)}
+                              >
+                                <div className="flex flex-col">
+                                  <span className="truncate">{option.label}</span>
+                                  <span className="text-[0.65rem] text-[hsl(var(--color-muted-foreground))]">
+                                    {option.id}
+                                  </span>
+                                </div>
+                              </DropdownMenuItem>
+                            ))}
+                          </div>
+                        </DropdownMenuGroup>
                       ))}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </ScrollArea>
-            <Input
-              value={model}
-              onChange={(event) => setModel(event.target.value)}
-              placeholder="openai/gpt-5, anthropic/claude-4.5-sonnet, ..."
-              className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.35)]"
-            />
-            {modelFetchError && <p className="text-xs text-red-400">{modelFetchError}</p>}
+                  </ScrollArea>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              {modelFetchError && <p className="text-xs text-red-400">{modelFetchError}</p>}
+            </div>
             <button
               type="button"
               onClick={() => setUseAISDK((prev) => !prev)}
