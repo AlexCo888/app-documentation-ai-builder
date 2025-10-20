@@ -12,10 +12,14 @@ export function buildPrdPrompt(a: Answers) {
   ].filter(Boolean).join(', ') || 'basic CSS';
 
   const ide = a.ai.copilot !== 'none' ? a.ai.copilot : 'none specified';
+  const appModels = a.ai.appModels && a.ai.appModels.length > 0 
+    ? a.ai.appModels.join(', ') 
+    : 'to be determined';
 
   return `
-You are a senior product manager and tech lead.
+You are a senior product manager and tech lead with access to real-time web search.
 Write a concise, actionable **Product Requirements Document (PRD)** in Markdown for the following project.
+Use web search to verify latest best practices, security considerations, and technology trends.
 
 ## Project Idea
 ${a.idea.trim()}
@@ -24,7 +28,7 @@ ${a.idea.trim()}
 - Framework: ${framework}
 - Styling: ${styling}
 - Backend/Infra: ${a.backend.useVercel ? 'Vercel (serverless/edge) ' : ''}${a.backend.auth !== 'none' ? ` + Auth: ${a.backend.auth}` : ''}${a.backend.db !== 'none' ? ` + DB: ${db}` : ''}
-- AI: ${a.ai.vercelAISDK ? 'Vercel AI SDK 5 + Gateway' : 'LLM integration TBD'}
+- AI: ${a.ai.vercelAISDK ? `Vercel AI SDK 5 + Gateway (models: ${appModels})` : 'LLM integration TBD'}
 - IDE/Copilot: ${ide}
 
 ## Requirements
@@ -48,13 +52,16 @@ ${a.idea.trim()}
 export function buildAgentsPrompt(a: Answers) {
   const framework = a.framework === 'nextjs_app' ? 'Next.js 15 (App Router)' : a.framework;
   const wantsNextStructure = a.wantsNextStructure;
+  const appModels = a.ai.appModels && a.ai.appModels.length > 0 
+    ? a.ai.appModels.join(', ') 
+    : 'to be determined';
 
   return `
 You are producing an **AGENTS.md** file per ${AGENTS_MD_URL}.
 
 Context about the project:
 - Idea: ${a.idea.trim()}
-- Stack: ${framework}; Styling: ${a.styling.tailwind ? 'Tailwind v4' : 'CSS'}${a.styling.shadcn ? ' + shadcn/ui' : ''}; AI: ${a.ai.vercelAISDK ? 'Vercel AI SDK 5' : 'TBD'}
+- Stack: ${framework}; Styling: ${a.styling.tailwind ? 'Tailwind v4' : 'CSS'}${a.styling.shadcn ? ' + shadcn/ui' : ''}; AI: ${a.ai.vercelAISDK ? `Vercel AI SDK 5 (models: ${appModels})` : 'TBD'}
 - Backend: ${a.backend.useVercel ? 'Vercel' : 'Other'}; DB: ${a.backend.db}; Auth: ${a.backend.auth}
 - IDE/Copilot: ${a.ai.copilot}
 
@@ -93,11 +100,15 @@ export function buildImplementationPrompt(a: Answers) {
   return `
 Produce **IMPLEMENTATION.md**: a numbered, step-by-step plan to implement the project **from an empty IDE**.
 Tailor to the stack choices below. Each step must be immediately actionable (exact commands/files).
+
+**IMPORTANT**: Use web search to find the latest package versions, setup commands, and official documentation.
+Verify all package versions are current and commands are up-to-date.
+
 Include:
-- Project bootstrap (create app, add Tailwind v4, add shadcn/ui components)
-- If DB selected: schema and setup steps
-- If AI SDK selected: how to add API route or server action and call the model via Vercel AI Gateway
-- Testing setup if enabled (Jest/Vitest; Cypress/Playwright)
+- Project bootstrap (create app, add Tailwind v4, add shadcn/ui components) with latest CLI commands
+- If DB selected: schema and setup steps with current package versions
+- If AI SDK selected: how to add API route or server action and call the model via Vercel AI Gateway (latest AI SDK 5 patterns)
+- Testing setup if enabled (Jest/Vitest; Cypress/Playwright) with current versions
 - Final verification checklist and common pitfalls
 
 Context:

@@ -1,4 +1,5 @@
-import { generateText } from 'ai';
+import { generateText, generateObject } from 'ai';
+import type { z } from 'zod';
 
 type GatewayModelId = `${string}/${string}`;
 
@@ -11,16 +12,58 @@ export async function genText({
   model,
   prompt,
   userId,
-  tags
+  tags,
+  webSearch
 }: {
   model?: string;
   prompt: string;
   userId?: string;
   tags?: string[];
+  webSearch?: 'low' | 'medium' | 'high';
 }) {
   const modelId = (model ?? DEFAULT_MODEL) as GatewayModelId;
+  
+  const providerOptions: any = {
+    gateway: {
+      user: userId || 'anon',
+      tags: tags || ['docs-gen']
+    }
+  };
+
+  // Add web search if requested (OpenAI GPT-5 feature)
+  if (webSearch && modelId.startsWith('openai/')) {
+    providerOptions.openai = {
+      includeWebSearch: {
+        searchContextSize: webSearch,
+      },
+    };
+  }
+
   const { text } = await generateText({
     model: modelId,
+    prompt,
+    providerOptions
+  });
+  return text;
+}
+
+export async function genObject<T extends z.ZodType>({
+  model,
+  schema,
+  prompt,
+  userId,
+  tags
+}: {
+  model?: string;
+  schema: T;
+  prompt: string;
+  userId?: string;
+  tags?: string[];
+}) {
+  const modelId = (model ?? DEFAULT_MODEL) as GatewayModelId;
+  const result = await generateObject({
+    model: modelId,
+    schema,
     prompt,
     providerOptions: {
       // Optional: usage attribution in Gateway analytics
@@ -30,5 +73,5 @@ export async function genText({
       }
     }
   });
-  return text;
+  return result.object as z.infer<T>;
 }

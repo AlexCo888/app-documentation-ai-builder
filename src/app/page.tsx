@@ -63,10 +63,10 @@ export default function Page() {
 
   const stepLabels = useMemo(
     () => [
-      { title: 'Ideate', description: 'Describe the product vision and non-negotiables.' },
-      { title: 'Architect', description: 'Lock the stack, hosting, data, and auth decisions.' },
-      { title: 'Orchestrate', description: 'Select Vercel AI Gateway models and AI collaborators.' },
-      { title: 'Generate', description: 'Stream the PRD suite, MCP manifest, and rollout plan.' }
+      { title: 'Define', description: 'Describe your product requirements and constraints.' },
+      { title: 'Configure', description: 'Choose your tech stack, hosting, database, and authentication.' },
+      { title: 'Select Models', description: 'Pick AI models from Vercel AI Gateway for generation.' },
+      { title: 'Generate', description: 'Create PRD documentation, MCP manifest, and implementation plan.' }
     ],
     []
   );
@@ -88,17 +88,17 @@ export default function Page() {
             Generative Docs Lab
           </Badge>
           <h2 className="mt-8 max-w-xl text-3xl font-semibold leading-snug md:text-4xl">
-            Translate product sparks into a cinematic documentation suite in one orchestrated flow.
+            Generate complete product documentation from your requirements in a single workflow.
           </h2>
           <p className="mt-5 max-w-2xl text-base text-[hsl(var(--color-muted-foreground))] md:text-lg">
-            A multi-agent pipeline co-designed with AI Gateway to deliver PRDs, AGENTS manifests, and stepwise
-            implementation playbooks. Fine-tune each lever, preview instantly, and export with zero friction.
+            An AI-powered pipeline that generates PRDs, agent manifests, and implementation guides.
+            Configure your settings, preview the results, and export as markdown files.
           </p>
           <div className="mt-10 grid gap-4 sm:grid-cols-3">
             {[
-              { label: 'Alignment Heatmap', value: 'Realtime scoring', tone: 'primary' as const },
-              { label: 'Model Switchboard', value: 'Pick any Gateway id', tone: 'accent' as const },
-              { label: 'Artifact Vault', value: 'Export-ready markdown', tone: 'foreground' as const }
+              { label: 'Quality Scoring', value: 'Real-time validation', tone: 'primary' as const },
+              { label: 'Model Selection', value: 'Choose any AI Gateway model', tone: 'accent' as const },
+              { label: 'Document Export', value: 'Download as markdown', tone: 'foreground' as const }
             ].map((item) => (
               <div
                 key={item.label}
@@ -117,7 +117,7 @@ export default function Page() {
         <div className="glass-panel flex h-full flex-col gap-6 rounded-[calc(var(--radius-lg)+0.8rem)] p-8">
           <div className="flex items-center gap-3 text-sm font-semibold uppercase tracking-[0.3em] text-[hsl(var(--color-muted-foreground))]">
             <Wand2 className="size-5 text-[hsl(var(--color-primary))]" />
-            Flow choreography
+            Generation Steps
           </div>
           <ol className="space-y-4">
             {stepLabels.map((step, index) => (
@@ -144,10 +144,10 @@ export default function Page() {
       {!files && !loading && (
         <Card className="glass-panel border-none bg-[hsl(var(--color-card)/0.82)] p-0 shadow-[var(--shadow-floating)]">
           <CardHeader className="border-b border-[hsl(var(--color-border)/0.7)] pb-8">
-            <CardTitle className="text-2xl font-semibold">Project DNA Questionnaire</CardTitle>
+            <CardTitle className="text-2xl font-semibold">Project Configuration</CardTitle>
             <CardDescription className="text-base">
-              Tune the build surface — frameworks, stacks, governance, and AI collaborators. Every signal feeds
-              a specialized prompt chain via Vercel AI SDK 5.
+              Configure your frameworks, tech stack, requirements, and AI models. Your inputs are used to generate
+              tailored documentation via Vercel AI SDK 5.
             </CardDescription>
           </CardHeader>
           <CardContent className="px-8 pb-10 pt-8">
@@ -161,17 +161,17 @@ export default function Page() {
           <CardHeader className="flex flex-row items-center justify-between border-b border-[hsl(var(--color-border)/0.7)] pb-6">
             <div>
               <CardTitle className="text-xl font-semibold text-[hsl(var(--color-foreground))]">
-                Synthesizing deliverables
+                Generating documentation
               </CardTitle>
               <CardDescription>
-                Orchestrating agents, streaming responses, and aligning documentation.
+                Running AI agents, streaming responses, and creating documentation.
               </CardDescription>
             </div>
             <Loader2 className="size-8 animate-spin text-[hsl(var(--color-primary))]" aria-hidden="true" />
           </CardHeader>
           <CardContent className="px-8 py-10">
             <div className="grid gap-6 md:grid-cols-3">
-              {['Prompt dialing', 'Agent negotiation', 'Document polishing'].map((phase) => (
+              {['Preparing prompts', 'Running agents', 'Formatting documents'].map((phase) => (
                 <div
                   key={phase}
                   className="rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-muted)/0.35)] p-6 text-center"
@@ -203,10 +203,10 @@ export default function Page() {
           <Card className="glass-panel border-none bg-[hsl(var(--color-card)/0.85)] p-0 shadow-[var(--shadow-floating)]">
             <CardHeader className="border-b border-[hsl(var(--color-border)/0.6)] pb-6">
               <CardTitle className="flex items-center gap-2 text-lg">
-                Document vault
+                Generated Files
               </CardTitle>
               <CardDescription>
-                Navigate between generated artifacts and export to Markdown instantly.
+                Browse generated documents and export them as markdown files.
               </CardDescription>
             </CardHeader>
             <CardContent className="px-4 py-6">
@@ -248,7 +248,7 @@ export default function Page() {
                 onClick={reset}
               >
                 <RefreshCw className="size-4" aria-hidden="true" />
-                Start a new scenario
+                Start a new project
               </Button>
             </CardContent>
           </Card>
@@ -260,7 +260,7 @@ export default function Page() {
                   {selectedFile.name}
                 </CardTitle>
                 <CardDescription>
-                  Preview the generated markdown and download a polished copy.
+                  Preview the generated markdown and download the file.
                 </CardDescription>
               </div>
               <DownloadButton filename={selectedFile.name} content={selectedFile.content} />

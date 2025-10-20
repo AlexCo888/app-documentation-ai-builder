@@ -7,7 +7,7 @@ export type IDECopilot =
   | 'other'
   | 'none';
 
-export type DBChoice = 'none' | 'supabase' | 'firebase' | 'planetscale' | 'neon' | 'sqlite' | 'other';
+export type DBChoice = 'none' | 'you-choose' | 'supabase' | 'firebase' | 'planetscale' | 'neon' | 'sqlite' | 'other';
 
 export type FrameworkChoice =
   | 'nextjs_app'
@@ -29,10 +29,11 @@ export interface Answers {
   backend: {
     useVercel: boolean;
     db: DBChoice;
-    auth: 'none' | 'supabase_auth' | 'authjs' | 'clerk' | 'other';
+    auth: 'none' | 'you-choose' | 'supabase_auth' | 'authjs' | 'clerk' | 'other' | 'better-auth';
   };
   ai: {
     vercelAISDK: boolean;
+    appModels?: string[]; // AI models for the app (if using AI SDK)
     agents: {
       qa: boolean;
       architecture: boolean;
@@ -46,5 +47,5 @@ export interface Answers {
     e2e: 'cypress' | 'playwright' | 'none';
   };
   constraints?: string; // perf, accessibility, compliance, etc.
-  model?: string; // override default model
+  docGenerationModel?: string; // model used to generate documentation
 }

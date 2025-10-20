@@ -11,10 +11,32 @@ export async function POST(req: NextRequest) {
     const { answers, userId } = body;
 
     const [prd, agents, impl, mcp] = await Promise.all([
-      genText({ model: answers.model, prompt: buildPrdPrompt(answers), userId, tags: ['prd'] }),
-      genText({ model: answers.model, prompt: buildAgentsPrompt(answers), userId, tags: ['agents'] }),
-      genText({ model: answers.model, prompt: buildImplementationPrompt(answers), userId, tags: ['implementation'] }),
-      genText({ model: answers.model, prompt: buildMcpPrompt(answers), userId, tags: ['mcp'] })
+      genText({ 
+        model: answers.docGenerationModel, 
+        prompt: buildPrdPrompt(answers), 
+        userId, 
+        tags: ['prd', 'web-search'],
+        webSearch: 'medium' // Get latest tech trends and best practices
+      }),
+      genText({ 
+        model: answers.docGenerationModel, 
+        prompt: buildAgentsPrompt(answers), 
+        userId, 
+        tags: ['agents']
+      }),
+      genText({ 
+        model: answers.docGenerationModel, 
+        prompt: buildImplementationPrompt(answers), 
+        userId, 
+        tags: ['implementation', 'web-search'],
+        webSearch: 'high' // Get latest package versions and setup guides
+      }),
+      genText({ 
+        model: answers.docGenerationModel, 
+        prompt: buildMcpPrompt(answers), 
+        userId, 
+        tags: ['mcp']
+      })
     ]);
 
     // Normalize optional MCP
