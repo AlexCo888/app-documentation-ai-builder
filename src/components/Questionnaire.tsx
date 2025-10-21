@@ -17,6 +17,7 @@ import { ArrowRight, CircuitBoard, Cpu, Database, Rocket, Sparkles, Workflow, Ch
 import { Sources, SourcesTrigger, SourcesContent, Source } from '@/components/ai-elements/sources';
 import { PRDAgentSelector, type PRDAgentSelection } from '@/components/PRDAgentSelector';
 import { DesignPatternShowcase } from '@/components/DesignPatternShowcase';
+import { useLocalStorage } from '@/lib/use-form-storage';
 
 type AuthChoice = 'none' | 'you-choose' | 'supabase_auth' | 'authjs' | 'clerk' | 'other' | 'better-auth';
 
@@ -301,13 +302,18 @@ export default function Questionnaire({
   onComplete: (answers: Answers) => void;
 }) {
   const [step, setStep] = useState(1);
-  const [idea, setIdea] = useState('');
+  
+  // Text inputs with localStorage
+  const [idea, setIdea, clearIdea] = useLocalStorage('idea', '');
+  const [frameworkOther, setFrameworkOther, clearFrameworkOther] = useLocalStorage('frameworkOther', '');
+  const [stylingOther, setStylingOther, clearStylingOther] = useLocalStorage('stylingOther', '');
+  const [constraints, setConstraints, clearConstraints] = useLocalStorage('constraints', '');
+  
   const inferred = useMemo(() => inferSelectionsFromIdea(idea), [idea]);
 
   const [framework, setFramework] = useState<FrameworkChoice>('nextjs_app');
-  const [frameworkOther, setFrameworkOther] = useState('');
   
-  // Styling states
+  // Styling states - managed globally to sync with sidebar
   const [tailwind, setTailwind] = useState(true);
   const [shadcn, setShadcn] = useState(true);
   const [designPattern, setDesignPattern] = useState<DesignPattern>();
@@ -320,7 +326,6 @@ export default function Questionnaire({
   const [animationStyle, setAnimationStyle] = useState<AnimationStyle>('smooth');
   const [typography, setTypography] = useState<TypographyStyle>('modern-sans');
   const [spacing, setSpacing] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable');
-  const [stylingOther, setStylingOther] = useState('');
 
   const [useVercel, setUseVercel] = useState(true);
   const [db, setDb] = useState<DBChoice>('none');
@@ -333,7 +338,6 @@ export default function Questionnaire({
   const [unit, setUnit] = useState<'jest' | 'vitest' | 'none'>('jest');
   const [e2e, setE2e] = useState<'cypress' | 'playwright' | 'none'>('cypress');
 
-  const [constraints, setConstraints] = useState('');
   const [docGenerationModel, setDocGenerationModel] = useState<string>(defaultModel);
   const [appModels, setAppModels] = useState<string[]>([]);
   
@@ -698,8 +702,19 @@ export default function Questionnaire({
                 }
               }}
               placeholder="Example: Build a compliance-ready founder dashboard with SOC2 auth, AI changelog summaries, and Neon-backed analytics."
-              className="min-h-[160px] resize-none rounded-3xl border-none bg-[hsl(var(--color-muted)/0.4)] p-6 pb-14 text-base text-[hsl(var(--color-foreground))] placeholder:text-[hsl(var(--color-muted-foreground))] focus-visible:ring-[hsl(var(--color-primary)/0.25)]"
+              className="min-h-[160px] resize-none rounded-3xl border-none bg-[hsl(var(--color-muted)/0.4)] p-6 pb-14 pr-12 text-base text-[hsl(var(--color-foreground))] placeholder:text-[hsl(var(--color-muted-foreground))] focus-visible:ring-[hsl(var(--color-primary)/0.25)]"
             />
+            {idea && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => clearIdea()}
+                className="absolute top-4 right-4 h-7 w-7 p-0 hover:bg-[hsl(var(--color-muted))]"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
             <div className="absolute bottom-4 right-4 flex items-center gap-2">
               {improveSources.length > 0 && !improvingPrompt && (
                 <Badge 
@@ -809,12 +824,25 @@ export default function Questionnaire({
               <Label className="text-sm font-semibold text-[hsl(var(--color-foreground))]">
                 Describe your tech stack
               </Label>
-              <Input
-                value={frameworkOther}
-                onChange={(event) => setFrameworkOther(event.target.value)}
-                placeholder="e.g., Python + Flask, Ruby on Rails, Laravel, etc."
-                className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)] text-[hsl(var(--color-foreground))] placeholder:text-[hsl(var(--color-muted-foreground))]"
-              />
+              <div className="relative">
+                <Input
+                  value={frameworkOther}
+                  onChange={(event) => setFrameworkOther(event.target.value)}
+                  placeholder="e.g., Python + Flask, Ruby on Rails, Laravel, etc."
+                  className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)] pr-10 text-[hsl(var(--color-foreground))] placeholder:text-[hsl(var(--color-muted-foreground))]"
+                />
+                {frameworkOther && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => clearFrameworkOther()}
+                    className="absolute top-1/2 right-2 h-7 w-7 -translate-y-1/2 p-0 hover:bg-[hsl(var(--color-muted))]"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
               <p className="text-xs text-[hsl(var(--color-muted-foreground))]">
                 Let us know what framework, language, or backend you&apos;re planning to use.
               </p>
@@ -984,12 +1012,25 @@ export default function Questionnaire({
           {/* Additional Notes */}
           <div className="space-y-2 rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] p-6">
             <Label className="text-sm font-semibold text-[hsl(var(--color-foreground))]">Additional Styling Notes</Label>
-            <Input
-              value={stylingOther}
-              onChange={(event) => setStylingOther(event.target.value)}
-              placeholder="Any specific design tokens, theming requirements, accessibility needs, etc."
-              className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)]"
-            />
+            <div className="relative">
+              <Input
+                value={stylingOther}
+                onChange={(event) => setStylingOther(event.target.value)}
+                placeholder="Any specific design tokens, theming requirements, accessibility needs, etc."
+                className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)] pr-10"
+              />
+              {stylingOther && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => clearStylingOther()}
+                  className="absolute top-1/2 right-2 h-7 w-7 -translate-y-1/2 p-0 hover:bg-[hsl(var(--color-muted))]"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </section>
       )}
@@ -1414,12 +1455,25 @@ export default function Questionnaire({
             <Label className="text-sm font-semibold text-[hsl(var(--color-foreground))]">
               Constraints, success metrics & other notes (optional)
             </Label>
-            <Textarea
-              value={constraints}
-              onChange={(event) => setConstraints(event.target.value)}
-              placeholder="Performance budgets, compliance requirements, roll-out strategy..."
-              className="min-h-[110px] resize-none rounded-3xl border-none bg-[hsl(var(--color-muted)/0.35)] p-5 text-sm focus-visible:ring-[hsl(var(--color-primary)/0.25)]"
-            />
+            <div className="relative">
+              <Textarea
+                value={constraints}
+                onChange={(event) => setConstraints(event.target.value)}
+                placeholder="Performance budgets, compliance requirements, roll-out strategy..."
+                className="min-h-[110px] resize-none rounded-3xl border-none bg-[hsl(var(--color-muted)/0.35)] p-5 pr-12 text-sm focus-visible:ring-[hsl(var(--color-primary)/0.25)]"
+              />
+              {constraints && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => clearConstraints()}
+                  className="absolute top-4 right-4 h-7 w-7 p-0 hover:bg-[hsl(var(--color-muted))]"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
           </div>
         </section>
       )}
