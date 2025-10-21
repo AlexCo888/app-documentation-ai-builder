@@ -816,7 +816,7 @@ export default function Questionnaire({
                 className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)] text-[hsl(var(--color-foreground))] placeholder:text-[hsl(var(--color-muted-foreground))]"
               />
               <p className="text-xs text-[hsl(var(--color-muted-foreground))]">
-                Let us know what framework, language, or backend you're planning to use.
+                Let us know what framework, language, or backend you&apos;re planning to use.
               </p>
             </div>
           )}
@@ -892,7 +892,7 @@ export default function Questionnaire({
               <div className="text-center">
                 <h2 className="text-2xl font-semibold text-[hsl(var(--color-foreground))]">Choose Your Design Language</h2>
                 <p className="text-sm text-[hsl(var(--color-muted-foreground))]">
-                  Select a visual pattern that defines your app's aesthetic. This guides the AI in generating consistent, beautiful components.
+                  Select a visual pattern that defines your app&apos;s aesthetic. This guides the AI in generating consistent, beautiful components.
                 </p>
               </div>
               

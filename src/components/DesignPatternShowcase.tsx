@@ -7,7 +7,6 @@ import { Check, Heart, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -254,9 +253,9 @@ function CustomizationSidebar({
                 <Label className="text-xs font-semibold capitalize">{type} Color</Label>
                 <div className="flex gap-2">
                   <Input type="color" value={customization[`${type}Color` as keyof DesignCustomization] as string}
-                    onChange={(e) => onChange({ [`${type}Color`]: e.target.value } as any)} className="h-9 w-16 cursor-pointer" />
+                    onChange={(e) => onChange({ [`${type}Color`]: e.target.value } as Partial<DesignCustomization>)} className="h-9 w-16 cursor-pointer" />
                   <Input type="text" value={customization[`${type}Color` as keyof DesignCustomization] as string}
-                    onChange={(e) => onChange({ [`${type}Color`]: e.target.value } as any)} className="flex-1 h-9 text-xs font-mono" />
+                    onChange={(e) => onChange({ [`${type}Color`]: e.target.value } as Partial<DesignCustomization>)} className="flex-1 h-9 text-xs font-mono" />
                 </div>
               </div>
             ))}
@@ -284,7 +283,7 @@ function CustomizationSidebar({
                   <span className="text-xs font-mono">{customization[key as keyof DesignCustomization]} px</span>
                 </div>
                 <Slider value={[customization[key as keyof DesignCustomization] as number]}
-                  onValueChange={([v]) => onChange({ [key]: v } as any)} min={min} max={max} step={1} />
+                  onValueChange={([v]) => onChange({ [key]: v } as Partial<DesignCustomization>)} min={min} max={max} step={1} />
               </div>
             ))}
           </div>
