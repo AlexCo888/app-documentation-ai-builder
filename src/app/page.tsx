@@ -57,43 +57,66 @@ export default function Page() {
       }
 
       let buffer = '';
+      let hasReceivedData = false;
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          if (!hasReceivedData) {
+            throw new Error('Connection closed without receiving data');
+          }
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n\n');
         buffer = lines.pop() || '';
 
         for (const line of lines) {
-          if (!line.trim()) continue;
+          if (!line.trim() || line.startsWith(':')) continue; // Skip heartbeats and empty lines
 
           const eventMatch = line.match(/^event: (.+)$/m);
           const dataMatch = line.match(/^data: (.+)$/m);
 
           if (eventMatch && dataMatch) {
             const event = eventMatch[1];
-            const data = JSON.parse(dataMatch[1]);
+            
+            try {
+              const data = JSON.parse(dataMatch[1]);
+              hasReceivedData = true;
 
-            if (event === 'progress') {
-              setProgressMessage(data.message || 'Processing...');
-            } else if (event === 'complete') {
-              if (data.ok && data.files) {
-                setFiles(data.files);
-                setSelectedFile(data.files[0]);
-                setProgressMessage('');
-              } else {
-                throw new Error('Invalid response format');
+              if (event === 'progress') {
+                setProgressMessage(data.message || 'Processing...');
+              } else if (event === 'complete') {
+                if (data.ok && data.files) {
+                  setFiles(data.files);
+                  setSelectedFile(data.files[0]);
+                  setProgressMessage('');
+                } else {
+                  throw new Error('Invalid response format');
+                }
+              } else if (event === 'error') {
+                throw new Error(data.error || 'Generation failed');
               }
-            } else if (event === 'error') {
-              throw new Error(data.error || 'Generation failed');
+            } catch (parseError) {
+              console.error('Failed to parse SSE data:', parseError, 'Raw data:', dataMatch[1]);
+              // Continue processing other events instead of failing completely
             }
           }
         }
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Generation error:', error);
+      
+      let message = 'Unknown error';
+      if (error instanceof Error) {
+        message = error.message;
+        // Provide helpful context for network errors
+        if (message.includes('network') || message.includes('fetch')) {
+          message = 'Network connection interrupted. The server may still be processing. Please wait a moment and try again.';
+        }
+      }
+      
       setError(message);
       setProgressMessage('');
     } finally {

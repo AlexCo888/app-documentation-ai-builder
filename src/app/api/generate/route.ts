@@ -8,7 +8,7 @@ import {
 } from '@/lib/agents';
 
 export const runtime = 'nodejs'; // Node.js runtime for longer-running operations
-export const maxDuration = 600; // 10 minutes for agent swarm execution
+export const maxDuration = 800; // 10 minutes for agent swarm execution
 
 // Helper to create SSE-formatted message
 function sseMessage(event: string, data: unknown): string {
@@ -28,6 +28,15 @@ export async function POST(req: NextRequest) {
     await writer.write(encoder.encode(sseMessage(event, data)));
   };
 
+  // Send keepalive heartbeats every 15 seconds to prevent proxy timeouts
+  const heartbeatInterval = setInterval(async () => {
+    try {
+      await writer.write(encoder.encode(': heartbeat\n\n'));
+    } catch {
+      clearInterval(heartbeatInterval);
+    }
+  }, 15000);
+
   // Start processing in background
   (async () => {
     try {
@@ -35,9 +44,9 @@ export async function POST(req: NextRequest) {
       console.log('🚀 Starting agent-based PRD generation...');
       await sendEvent('progress', { step: 'starting', message: 'Initializing agent swarm...' });
 
-      // Create abort controller with timeout (590s, before maxDuration of 600s)
+      // Create abort controller with timeout (790s, before maxDuration of 800s)
       const abortController = new AbortController();
-      const timeoutId = setTimeout(() => abortController.abort(), 590000);
+      const timeoutId = setTimeout(() => abortController.abort(), 790000);
 
       // Wrap all operations with timeout handling
       const generateWithTimeout = async () => {
@@ -104,13 +113,14 @@ export async function POST(req: NextRequest) {
       if (error instanceof Error && (error.message === 'Document generation timed out' || error.name === 'AbortError')) {
         await sendEvent('error', {
           ok: false,
-          error: 'Document generation timed out after 10 minutes. This may happen with very complex projects. Please try again or simplify your requirements.'
+          error: 'Document generation timed out after 13 minutes. This may happen with very complex projects. Please try again or simplify your requirements.'
         });
       } else {
         const message = error instanceof Error ? error.message : 'Unknown error';
         await sendEvent('error', { ok: false, error: message });
       }
     } finally {
+      clearInterval(heartbeatInterval);
       await writer.close();
     }
   })();
