@@ -131,7 +131,7 @@ AVAILABLE MODELS (choose ONLY from this list):
 Return model IDs in exact format: provider/model-name`;
 
     const { object: result } = await generateObject({
-      model: 'openai/gpt-5',
+      model: 'openai/gpt-5-mini',
       schema: recommendationsSchema,
       prompt,
       abortSignal: abortController.signal,

@@ -17,7 +17,7 @@ export abstract class BaseAgent {
     this.role = role;
     this.capability = AGENT_CAPABILITIES[role];
     this.context = context;
-    this.model = model || context.model || 'openai/gpt-5';
+    this.model = model || context.model || 'openai/gpt-5-mini';
   }
 
   /**

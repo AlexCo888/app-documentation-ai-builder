@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import type { Answers } from '@/lib/types';
 import { IntroModal } from '@/components/IntroModal';
 
-const DEFAULT_MODEL = process.env.NEXT_PUBLIC_DEFAULT_MODEL || 'openai/gpt-5';
+const DEFAULT_MODEL = process.env.NEXT_PUBLIC_DEFAULT_MODEL || 'openai/gpt-5-mini';
 
 type FileOut = { name: string; content: string };
 type GenerateResponse = { ok: boolean; files?: FileOut[]; error?: string };

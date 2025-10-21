@@ -10,7 +10,7 @@ type ProviderOptions = Record<string, Record<string, JsonValue>>;
 // Model auto-routes via Vercel AI Gateway with 'provider/model' strings.
 // Docs: https://ai-sdk.dev/providers/ai-sdk-providers/ai-gateway
 // On Vercel: OIDC auth (no key). Local: `vercel dev` or set AI_GATEWAY_API_KEY.
-export const DEFAULT_MODEL = (process.env.AI_MODEL || 'openai/gpt-5') as GatewayModelId;
+export const DEFAULT_MODEL = (process.env.AI_MODEL || 'openai/gpt-5-mini') as GatewayModelId;
 
 export async function genText({
   model,
