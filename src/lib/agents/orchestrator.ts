@@ -216,7 +216,7 @@ Return the outline in Markdown format with clear hierarchy.`;
   }
 
   /**
-   * Compile all sections into final PRD
+   Compile all sections into final PRD
    */
   private async compilePRD(): Promise<string> {
     const sections = this.context.sections;
