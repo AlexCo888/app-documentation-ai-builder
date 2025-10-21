@@ -29,27 +29,73 @@ export default function Page() {
   const [selectedFile, setSelectedFile] = useState<FileOut | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progressMessage, setProgressMessage] = useState<string>('');
 
   async function handleComplete(answers: Answers) {
     setLoading(true);
     setError(null);
     setFiles(null);
     setSelectedFile(null);
+    setProgressMessage('Starting generation...');
+
     try {
       const res = await fetch('/api/generate', {
         method: 'POST',
         body: JSON.stringify({ answers }),
         headers: { 'content-type': 'application/json' }
       });
-      const data: GenerateResponse = await res.json();
-      if (!res.ok || !data.ok || !data.files) {
-        throw new Error(data.error || 'Generation failed');
+
+      if (!res.ok) {
+        throw new Error('Failed to start generation');
       }
-      setFiles(data.files);
-      setSelectedFile(data.files[0]);
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) {
+        throw new Error('No response stream available');
+      }
+
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+
+          const eventMatch = line.match(/^event: (.+)$/m);
+          const dataMatch = line.match(/^data: (.+)$/m);
+
+          if (eventMatch && dataMatch) {
+            const event = eventMatch[1];
+            const data = JSON.parse(dataMatch[1]);
+
+            if (event === 'progress') {
+              setProgressMessage(data.message || 'Processing...');
+            } else if (event === 'complete') {
+              if (data.ok && data.files) {
+                setFiles(data.files);
+                setSelectedFile(data.files[0]);
+                setProgressMessage('');
+              } else {
+                throw new Error('Invalid response format');
+              }
+            } else if (event === 'error') {
+              throw new Error(data.error || 'Generation failed');
+            }
+          }
+        }
+      }
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       setError(message);
+      setProgressMessage('');
     } finally {
       setLoading(false);
     }
@@ -164,24 +210,22 @@ export default function Page() {
                 Generating documentation
               </CardTitle>
               <CardDescription>
-                Running AI agents, streaming responses, and creating documentation.
+                {progressMessage || 'Running AI agents, streaming responses, and creating documentation.'}
               </CardDescription>
             </div>
             <Loader2 className="size-8 animate-spin text-[hsl(var(--color-primary))]" aria-hidden="true" />
           </CardHeader>
           <CardContent className="px-8 py-10">
-            <div className="grid gap-6 md:grid-cols-3">
-              {['Preparing prompts', 'Running agents', 'Formatting documents'].map((phase) => (
-                <div
-                  key={phase}
-                  className="rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-muted)/0.35)] p-6 text-center"
-                >
-                  <p className="text-sm font-medium tracking-wide">{phase}</p>
-                  <p className="mt-3 text-xs uppercase tracking-[0.28em] text-[hsl(var(--color-muted-foreground))]">
-                    live
-                  </p>
-                </div>
-              ))}
+            <div className="rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-muted)/0.35)] p-6">
+              <div className="flex items-center justify-center gap-3">
+                <Loader2 className="size-5 animate-spin text-[hsl(var(--color-primary))]" />
+                <p className="text-sm font-medium tracking-wide text-[hsl(var(--color-foreground))]">
+                  {progressMessage || 'Processing...'}
+                </p>
+              </div>
+              <p className="mt-4 text-center text-xs text-[hsl(var(--color-muted-foreground))]">
+                This may take 5-10 minutes for complex projects. Real-time updates will appear above.
+              </p>
             </div>
           </CardContent>
         </Card>

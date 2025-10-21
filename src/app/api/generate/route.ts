@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { Answers } from '@/lib/types';
 import {
   generatePRDWithAgents,
@@ -10,79 +10,116 @@ import {
 export const runtime = 'nodejs'; // Node.js runtime for longer-running operations
 export const maxDuration = 600; // 10 minutes for agent swarm execution
 
+// Helper to create SSE-formatted message
+function sseMessage(event: string, data: unknown): string {
+  return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
+}
+
 export async function POST(req: NextRequest) {
-  try {
-    const body = (await req.json()) as { answers: Answers; userId?: string };
-    const { answers, userId } = body;
+  // Parse request body before streaming
+  const body = (await req.json()) as { answers: Answers; userId?: string };
+  const { answers, userId } = body;
 
-    console.log('🚀 Starting agent-based PRD generation...');
+  const encoder = new TextEncoder();
+  const stream = new TransformStream();
+  const writer = stream.writable.getWriter();
 
-    // Create abort controller with timeout (590s, before maxDuration of 600s)
-    const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(), 590000);
+  const sendEvent = async (event: string, data: unknown) => {
+    await writer.write(encoder.encode(sseMessage(event, data)));
+  };
 
-    // Wrap all operations with timeout handling
-    const generateWithTimeout = async () => {
-      // Generate PRD using agent swarm
-      const { prd, context, summary } = await generatePRDWithAgents(
-        answers,
-        answers.docGenerationModel,
-        userId
-      );
+  // Start processing in background
+  (async () => {
+    try {
 
-      console.log('📝 PRD generated, creating supporting documents...');
+      console.log('🚀 Starting agent-based PRD generation...');
+      await sendEvent('progress', { step: 'starting', message: 'Initializing agent swarm...' });
 
-      // Generate supporting documents using the PRD context
-      const [agents, impl, mcp] = await Promise.all([
-        generateAgentsGuide(answers, context, answers.docGenerationModel),
-        generateImplementationGuide(answers, context, answers.docGenerationModel),
-        generateMCPGuide(answers, answers.docGenerationModel, userId)
+      // Create abort controller with timeout (590s, before maxDuration of 600s)
+      const abortController = new AbortController();
+      const timeoutId = setTimeout(() => abortController.abort(), 590000);
+
+      // Wrap all operations with timeout handling
+      const generateWithTimeout = async () => {
+        await sendEvent('progress', { step: 'prd', message: 'Generating PRD with specialized agents...' });
+        
+        // Generate PRD using agent swarm
+        const { prd, context, summary } = await generatePRDWithAgents(
+          answers,
+          answers.docGenerationModel,
+          userId
+        );
+
+        console.log('📝 PRD generated, creating supporting documents...');
+        await sendEvent('progress', { step: 'prd-complete', message: 'PRD complete. Generating supporting documents...' });
+
+        await sendEvent('progress', { step: 'docs', message: 'Creating AGENTS.md, IMPLEMENTATION.md, MCP.md...' });
+
+        // Generate supporting documents using the PRD context
+        const [agents, impl, mcp] = await Promise.all([
+          generateAgentsGuide(answers, context, answers.docGenerationModel),
+          generateImplementationGuide(answers, context, answers.docGenerationModel),
+          generateMCPGuide(answers, answers.docGenerationModel, userId)
+        ]);
+
+        return { prd, context, summary, agents, impl, mcp };
+      };
+
+      const result = await Promise.race([
+        generateWithTimeout(),
+        new Promise<never>((_, reject) => {
+          abortController.signal.addEventListener('abort', () => {
+            reject(new Error('Document generation timed out'));
+          });
+        })
       ]);
 
-      return { prd, context, summary, agents, impl, mcp };
-    };
+      clearTimeout(timeoutId); // Clean up timeout
 
-    const result = await Promise.race([
-      generateWithTimeout(),
-      new Promise<never>((_, reject) => {
-        abortController.signal.addEventListener('abort', () => {
-          reject(new Error('Document generation timed out'));
+      console.log('✅ All documents generated successfully');
+      console.log(result.summary);
+
+      await sendEvent('progress', { step: 'finalizing', message: 'All documents generated successfully!' });
+
+      // Send final result
+      await sendEvent('complete', {
+        ok: true,
+        files: [
+          { name: 'PRD.md', content: result.prd },
+          { name: 'AGENTS.md', content: result.agents },
+          { name: 'IMPLEMENTATION.md', content: result.impl },
+          { name: 'MCP.md', content: result.mcp }
+        ],
+        metadata: {
+          summary: result.summary,
+          agentCount: Object.keys(result.context.agentStates).length,
+          messageCount: result.context.messages.length,
+          sectionsGenerated: Object.keys(result.context.sections).length
+        }
+      });
+    } catch (error: unknown) {
+      console.error('❌ Agent generation error:', error);
+      
+      // Handle timeout errors
+      if (error instanceof Error && (error.message === 'Document generation timed out' || error.name === 'AbortError')) {
+        await sendEvent('error', {
+          ok: false,
+          error: 'Document generation timed out after 10 minutes. This may happen with very complex projects. Please try again or simplify your requirements.'
         });
-      })
-    ]);
-
-    clearTimeout(timeoutId); // Clean up timeout
-
-    console.log('✅ All documents generated successfully');
-    console.log(result.summary);
-
-    return NextResponse.json({
-      ok: true,
-      files: [
-        { name: 'PRD.md', content: result.prd },
-        { name: 'AGENTS.md', content: result.agents },
-        { name: 'IMPLEMENTATION.md', content: result.impl },
-        { name: 'MCP.md', content: result.mcp }
-      ],
-      metadata: {
-        summary: result.summary,
-        agentCount: Object.keys(result.context.agentStates).length,
-        messageCount: result.context.messages.length,
-        sectionsGenerated: Object.keys(result.context.sections).length
+      } else {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        await sendEvent('error', { ok: false, error: message });
       }
-    });
-  } catch (error: unknown) {
-    console.error('❌ Agent generation error:', error);
-    
-    // Handle timeout errors
-    if (error instanceof Error && (error.message === 'Document generation timed out' || error.name === 'AbortError')) {
-      return NextResponse.json(
-        { ok: false, error: 'Document generation timed out after 10 minutes. This may happen with very complex projects. Please try again or simplify your requirements.' },
-        { status: 408 }
-      );
+    } finally {
+      await writer.close();
     }
-    
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
-  }
+  })();
+
+  return new Response(stream.readable, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+    },
+  });
 }
