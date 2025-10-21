@@ -2,6 +2,10 @@ import { generateText, generateObject } from 'ai';
 import type { z } from 'zod';
 
 type GatewayModelId = `${string}/${string}`;
+type WebSearchLevel = 'low' | 'medium' | 'high';
+type JsonPrimitive = string | number | boolean | null;
+type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue };
+type ProviderOptions = Record<string, Record<string, JsonValue>>;
 
 // Model auto-routes via Vercel AI Gateway with 'provider/model' strings.
 // Docs: https://ai-sdk.dev/providers/ai-sdk-providers/ai-gateway
@@ -19,14 +23,14 @@ export async function genText({
   prompt: string;
   userId?: string;
   tags?: string[];
-  webSearch?: 'low' | 'medium' | 'high';
+  webSearch?: WebSearchLevel;
 }) {
   const modelId = (model ?? DEFAULT_MODEL) as GatewayModelId;
-  
-  const providerOptions: any = {
+
+  const providerOptions: ProviderOptions = {
     gateway: {
-      user: userId || 'anon',
-      tags: tags || ['docs-gen']
+      user: userId ?? 'anon',
+      tags: tags ?? ['docs-gen']
     }
   };
 

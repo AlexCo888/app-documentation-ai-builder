@@ -190,7 +190,7 @@ export function PRDAgentSelector({ selected, onChange }: PRDAgentSelectorProps) 
             <div className="space-y-2 text-sm">
               <p className="text-[hsl(var(--color-foreground))]">
                 <strong>How it works:</strong> Each agent generates a specialized section of your PRD. Agents
-                collaborate by building on each other's outputs. Dependencies are automatically managed.
+                collaborate by building on each other&rsquo;s outputs. Dependencies are automatically managed.
               </p>
               <p className="text-[hsl(var(--color-muted-foreground))]">
                 💡 <strong>Tip:</strong> Select all agents for comprehensive documentation, or choose specific agents

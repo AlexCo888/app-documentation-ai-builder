@@ -1,4 +1,5 @@
 import { generateText, ModelMessage, stepCountIs } from 'ai';
+import type { ToolSet } from 'ai';
 import type { AgentRole, AgentCapability, SwarmContext, AgentMessage } from './types';
 import { AGENT_CAPABILITIES } from './types';
 
@@ -28,7 +29,7 @@ export abstract class BaseAgent {
    * Get the tools available to this agent
    * Returns a ToolSet (record of tool names to tool instances)
    */
-  protected abstract getTools(): any;
+  protected abstract getTools(): ToolSet;
 
   /**
    * Execute the agent's primary task
