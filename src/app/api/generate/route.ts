@@ -7,8 +7,8 @@ import {
   generateAgentsGuide
 } from '@/lib/agents';
 
-export const runtime = 'edge'; // Fast startup, great with Gateway
-export const maxDuration = 600; // 5 minutes for agent swarm execution
+export const runtime = 'nodejs'; // Node.js runtime for longer-running operations
+export const maxDuration = 600; // 10 minutes for agent swarm execution
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,9 +17,9 @@ export async function POST(req: NextRequest) {
 
     console.log('🚀 Starting agent-based PRD generation...');
 
-    // Create abort controller with timeout (280s, before maxDuration of 300s)
+    // Create abort controller with timeout (590s, before maxDuration of 600s)
     const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(), 280000);
+    const timeoutId = setTimeout(() => abortController.abort(), 590000);
 
     // Wrap all operations with timeout handling
     const generateWithTimeout = async () => {
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     // Handle timeout errors
     if (error instanceof Error && (error.message === 'Document generation timed out' || error.name === 'AbortError')) {
       return NextResponse.json(
-        { ok: false, error: 'Document generation timed out after 4.5 minutes. This may happen with complex projects. Please try again or simplify your requirements.' },
+        { ok: false, error: 'Document generation timed out after 10 minutes. This may happen with very complex projects. Please try again or simplify your requirements.' },
         { status: 408 }
       );
     }

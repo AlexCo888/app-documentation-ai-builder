@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { generateObject } from 'ai';
 import { z } from 'zod';
 
-export const runtime = 'edge';
-export const maxDuration = 300; // 60s for AI model recommendation with web search
+export const runtime = 'nodejs';
+export const maxDuration = 300; // 5 minutes for AI model recommendation with web search
 
 // Define Zod schema for model recommendations
 const recommendationsSchema = z.object({
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Create abort controller with timeout
     const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(), 55000); // 55s timeout (before maxDuration)
+    const timeoutId = setTimeout(() => abortController.abort(), 290000); // 290s timeout (before maxDuration)
 
     const prompt = `You are an expert AI architect helping developers choose the right AI models for their application.
 

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateText } from 'ai';
 
-export const runtime = 'edge';
-export const maxDuration = 300; // 60s for AI prompt improvement with web search
+export const runtime = 'nodejs';
+export const maxDuration = 300; // 5 minutes for AI prompt improvement with web search
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     // Create abort controller with timeout
     const abortController = new AbortController();
-    const timeoutId = setTimeout(() => abortController.abort(), 55000); // 55s timeout (before maxDuration)
+    const timeoutId = setTimeout(() => abortController.abort(), 290000); // 290s timeout (before maxDuration)
 
     const prompt = `You are an expert product manager helping developers write clear, comprehensive project descriptions.
 
