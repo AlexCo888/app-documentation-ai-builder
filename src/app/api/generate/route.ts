@@ -1,46 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { genText } from '@/lib/ai';
 import { Answers } from '@/lib/types';
-import { buildPrdPrompt, buildAgentsPrompt, buildImplementationPrompt, buildMcpPrompt } from '@/lib/prompts';
+import {
+  generatePRDWithAgents,
+  generateImplementationGuide,
+  generateMCPGuide,
+  generateAgentsGuide
+} from '@/lib/agents';
 
 export const runtime = 'edge'; // Fast startup, great with Gateway
+export const maxDuration = 300; // 5 minutes for agent swarm execution
 
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as { answers: Answers; userId?: string };
     const { answers, userId } = body;
 
-    const [prd, agents, impl, mcp] = await Promise.all([
-      genText({ 
-        model: answers.docGenerationModel, 
-        prompt: buildPrdPrompt(answers), 
-        userId, 
-        tags: ['prd', 'web-search'],
-        webSearch: 'medium' // Get latest tech trends and best practices
-      }),
-      genText({ 
-        model: answers.docGenerationModel, 
-        prompt: buildAgentsPrompt(answers), 
-        userId, 
-        tags: ['agents']
-      }),
-      genText({ 
-        model: answers.docGenerationModel, 
-        prompt: buildImplementationPrompt(answers), 
-        userId, 
-        tags: ['implementation', 'web-search'],
-        webSearch: 'high' // Get latest package versions and setup guides
-      }),
-      genText({ 
-        model: answers.docGenerationModel, 
-        prompt: buildMcpPrompt(answers), 
-        userId, 
-        tags: ['mcp']
-      })
+    console.log('🚀 Starting agent-based PRD generation...');
+
+    // Generate PRD using agent swarm
+    const { prd, context, summary } = await generatePRDWithAgents(
+      answers,
+      answers.docGenerationModel,
+      userId
+    );
+
+    console.log('📝 PRD generated, creating supporting documents...');
+
+    // Generate supporting documents using the PRD context
+    const [agents, impl, mcp] = await Promise.all([
+      generateAgentsGuide(answers, context, answers.docGenerationModel),
+      generateImplementationGuide(answers, context, answers.docGenerationModel),
+      generateMCPGuide(answers, answers.docGenerationModel, userId)
     ]);
 
-    // Normalize optional MCP
-    const mcpDoc = answers.ai.copilot === 'none' ? 'MCP is optional. Skipped.' : mcp;
+    console.log('✅ All documents generated successfully');
+    console.log(summary);
 
     return NextResponse.json({
       ok: true,
@@ -48,11 +42,17 @@ export async function POST(req: NextRequest) {
         { name: 'PRD.md', content: prd },
         { name: 'AGENTS.md', content: agents },
         { name: 'IMPLEMENTATION.md', content: impl },
-        { name: 'MCP.md', content: mcpDoc }
-      ]
+        { name: 'MCP.md', content: mcp }
+      ],
+      metadata: {
+        summary,
+        agentCount: Object.keys(context.agentStates).length,
+        messageCount: context.messages.length,
+        sectionsGenerated: Object.keys(context.sections).length
+      }
     });
   } catch (error: unknown) {
-    console.error(error);
+    console.error('❌ Agent generation error:', error);
     const message = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }

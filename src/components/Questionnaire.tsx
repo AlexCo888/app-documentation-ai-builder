@@ -15,6 +15,7 @@ import type { Answers, FrameworkChoice, DBChoice, IDECopilot } from '@/lib/types
 import type { LucideIcon } from 'lucide-react';
 import { ArrowRight, CircuitBoard, Cpu, Database, Rocket, Sparkles, Workflow, Check, ChevronDown, Loader2, ExternalLink, Search, X } from 'lucide-react';
 import { Sources, SourcesTrigger, SourcesContent, Source } from '@/components/ai-elements/sources';
+import { PRDAgentSelector, type PRDAgentSelection } from '@/components/PRDAgentSelector';
 
 type AuthChoice = 'none' | 'you-choose' | 'supabase_auth' | 'authjs' | 'clerk' | 'other' | 'better-auth';
 
@@ -28,8 +29,9 @@ type Step = {
 const steps: Step[] = [
   { id: 1, label: 'Define', blurb: 'Describe your product requirements and constraints.', icon: Sparkles },
   { id: 2, label: 'Configure', blurb: 'Choose your tech stack, hosting, database, and authentication.', icon: CircuitBoard },
-  { id: 3, label: 'Select Models', blurb: 'Pick AI models from Vercel AI Gateway for generation.', icon: Workflow },
-  { id: 4, label: 'Generate', blurb: 'Create PRD documentation, MCP manifest, and implementation plan.', icon: Rocket }
+  { id: 3, label: 'Select Agents', blurb: 'Choose which specialized AI agents will generate your PRD.', icon: Cpu },
+  { id: 4, label: 'Select Models', blurb: 'Pick AI models from Vercel AI Gateway for generation.', icon: Workflow },
+  { id: 5, label: 'Generate', blurb: 'Create PRD documentation, MCP manifest, and implementation plan.', icon: Rocket }
 ];
 
 const frameworkOptions: Array<{ value: FrameworkChoice; label: string; note: string }> = [
@@ -310,9 +312,6 @@ export default function Questionnaire({
   const [auth, setAuth] = useState<AuthChoice>('none');
 
   const [useAISDK, setUseAISDK] = useState(true);
-  const [qaAgent, setQaAgent] = useState(true);
-  const [archAgent, setArchAgent] = useState(true);
-  const [ideAgent, setIdeAgent] = useState(true);
   const [ide, setIde] = useState<IDECopilot>('vscode_copilot');
 
   const [testing, setTesting] = useState(true);
@@ -322,6 +321,18 @@ export default function Questionnaire({
   const [constraints, setConstraints] = useState('');
   const [docGenerationModel, setDocGenerationModel] = useState<string>(defaultModel);
   const [appModels, setAppModels] = useState<string[]>([]);
+  
+  // PRD Agent Selection - all enabled by default
+  const [prdAgents, setPrdAgents] = useState<PRDAgentSelection>({
+    marketAnalyst: true,
+    scopePlanner: true,
+    nextjsArchitect: true,
+    aiDesigner: true,
+    dataApiDesigner: true,
+    securityOfficer: true,
+    performanceEngineer: true,
+    qualityLead: true
+  });
   const [modelsByProvider, setModelsByProvider] = useState<Record<string, ModelOption[]>>(() =>
     cloneModelMap(CURATED_MODELS_BY_PROVIDER)
   );
@@ -505,7 +516,7 @@ export default function Questionnaire({
   }, [docGenerationModel, defaultModel]);
 
   function next() {
-    setStep((current) => Math.min(4, current + 1));
+    setStep((current) => Math.min(5, current + 1));
   }
 
   function back() {
@@ -522,9 +533,9 @@ export default function Questionnaire({
       ai: {
         vercelAISDK: useAISDK,
         appModels: useAISDK && appModels.length > 0 ? appModels : undefined,
-        agents: { qa: qaAgent, architecture: archAgent, ideOptimization: ideAgent },
         copilot: ide
       },
+      prdAgents,
       testing: { enabled: testing, unit, e2e },
       constraints: constraints || undefined,
       docGenerationModel: docGenerationModel || defaultModel
@@ -867,6 +878,13 @@ export default function Questionnaire({
 
       {step === 3 && (
         <section className="space-y-8 rounded-[calc(var(--radius-lg)+0.75rem)] border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.82)] p-8 shadow-[0_25px_60px_-40px_hsl(var(--shadow))] backdrop-blur-xl">
+          {/* PRD Agent Selection */}
+          <PRDAgentSelector selected={prdAgents} onChange={setPrdAgents} />
+        </section>
+      )}
+
+      {step === 4 && (
+        <section className="space-y-8 rounded-[calc(var(--radius-lg)+0.75rem)] border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.82)] p-8 shadow-[0_25px_60px_-40px_hsl(var(--shadow))] backdrop-blur-xl">
           {/* Documentation Generation Model */}
           <div className="space-y-4 rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.75)] p-6">
             <div className="space-y-2">
@@ -1156,66 +1174,18 @@ export default function Questionnaire({
             )}
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="space-y-6">
             <div className="space-y-3 rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.75)] p-6">
               <div className="flex items-center gap-3">
                 <Cpu className="size-5 text-[hsl(var(--color-primary))]" />
-                <p className="text-sm font-semibold text-[hsl(var(--color-foreground))]">Companion agents</p>
+                <p className="text-sm font-semibold text-[hsl(var(--color-foreground))]">IDE / Code Copilot</p>
               </div>
-              {[
-                {
-                  label: 'QA engineer',
-                  detail: 'Recommends coverage, linting, and regression tooling.',
-                  active: qaAgent,
-                  toggle: () => setQaAgent((prev) => !prev)
-                },
-                {
-                  label: 'Architecture coach',
-                  detail: 'Suggests folder topologies, scaling patterns, and guardrails.',
-                  active: archAgent,
-                  toggle: () => setArchAgent((prev) => !prev)
-                },
-                {
-                  label: 'IDE optimizer',
-                  detail: 'Configs extensions, keymaps, and CLI ergonomics.',
-                  active: ideAgent,
-                  toggle: () => setIdeAgent((prev) => !prev)
-                }
-              ].map((agent) => (
-                <button
-                  key={agent.label}
-                  type="button"
-                  onClick={agent.toggle}
-                  aria-pressed={agent.active}
-                  className={cn(
-                    'flex cursor-pointer items-center justify-between gap-4 rounded-2xl border px-4 py-4 text-left text-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:shadow-[0_26px_48px_-32px_hsl(var(--color-ring-soft))]',
-                    agent.active
-                      ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.15)] text-[hsl(var(--color-primary))]'
-                      : 'border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] text-[hsl(var(--color-muted-foreground))]'
-                  )}
-                >
-                  <div className="flex flex-col gap-1">
-                    <span className="font-semibold text-[hsl(var(--color-foreground))]">{agent.label}</span>
-                    <span className="text-[0.7rem] text-[hsl(var(--color-muted-foreground))]">
-                      {agent.detail}
-                    </span>
-                  </div>
-                  <span
-                    className={cn(
-                      'grid size-8 place-items-center rounded-full border transition-colors',
-                      agent.active
-                        ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.2)] text-[hsl(var(--color-primary))]'
-                        : 'border-[hsl(var(--color-border)/0.7)] text-[hsl(var(--color-muted-foreground))]'
-                    )}
-                    aria-hidden="true"
-                  >
-                    {agent.active && <Check className="size-4" />}
-                  </span>
-                </button>
-              ))}
+              <p className="text-xs text-[hsl(var(--color-muted-foreground))]">
+                Select your development environment for MCP integration and IDE-specific recommendations
+              </p>
               <Select value={ide} onValueChange={(value) => setIde(value as IDECopilot)}>
                 <SelectTrigger className="w-full rounded-2xl">
-                  <SelectValue placeholder="IDE / copilot" />
+                  <SelectValue placeholder="Select IDE / copilot" />
                 </SelectTrigger>
                 <SelectContent>
                   {copilotOptions.map((option) => (
@@ -1277,7 +1247,7 @@ export default function Questionnaire({
         </section>
       )}
 
-      {step === 4 && (
+      {step === 5 && (
         <section className="space-y-6 rounded-[calc(var(--radius-lg)+0.75rem)] border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.85)] p-8 shadow-[0_25px_60px_-40px_hsl(var(--shadow))] backdrop-blur-xl">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[
@@ -1293,20 +1263,14 @@ export default function Questionnaire({
               { label: 'Auth', value: authOptions.find((entry) => entry.value === auth)?.label ?? auth },
               { label: 'Doc generation model', value: docGenerationModel || defaultModel },
               {
+                label: 'PRD Agents',
+                value: `${Object.values(prdAgents).filter(Boolean).length} / 8 selected`
+              },
+              {
                 label: 'App AI models',
                 value: useAISDK && appModels.length > 0 
                   ? `${appModels.length} selected` 
                   : useAISDK ? 'None selected' : 'Not using AI SDK'
-              },
-              {
-                label: 'Agents',
-                value: [
-                  qaAgent && 'QA',
-                  archAgent && 'Architecture',
-                  ideAgent && 'IDE'
-                ]
-                  .filter(Boolean)
-                  .join(', ') || 'None'
               },
               {
                 label: 'Testing',
@@ -1352,7 +1316,7 @@ export default function Questionnaire({
           Back
         </Button>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-          {step < 4 && (
+          {step < 5 && (
             <Button
               onClick={next}
               className="w-full justify-center gap-2 rounded-full bg-[hsl(var(--color-primary))] text-[hsl(var(--color-primary-foreground))] hover:bg-[hsl(var(--color-primary)/0.9)] sm:w-auto"
@@ -1361,7 +1325,7 @@ export default function Questionnaire({
               <ArrowRight className="size-4" />
             </Button>
           )}
-          {step === 4 && (
+          {step === 5 && (
             <Button
               onClick={finish}
               className="w-full justify-center gap-2 rounded-full bg-[hsl(var(--color-primary))] text-[hsl(var(--color-primary-foreground))] hover:bg-[hsl(var(--color-primary)/0.9)] sm:w-auto"

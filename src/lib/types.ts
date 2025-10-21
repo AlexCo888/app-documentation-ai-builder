@@ -34,12 +34,17 @@ export interface Answers {
   ai: {
     vercelAISDK: boolean;
     appModels?: string[]; // AI models for the app (if using AI SDK)
-    agents: {
-      qa: boolean;
-      architecture: boolean;
-      ideOptimization: boolean;
-    };
     copilot: IDECopilot;
+  };
+  prdAgents?: {
+    marketAnalyst: boolean;
+    scopePlanner: boolean;
+    nextjsArchitect: boolean;
+    aiDesigner: boolean;
+    dataApiDesigner: boolean;
+    securityOfficer: boolean;
+    performanceEngineer: boolean;
+    qualityLead: boolean;
   };
   testing: {
     enabled: boolean;
