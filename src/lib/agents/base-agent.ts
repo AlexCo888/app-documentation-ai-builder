@@ -161,14 +161,48 @@ export abstract class BaseAgent {
    */
   protected getProjectContext(): string {
     const a = this.context.answers;
-    const framework = a.framework === 'nextjs_app' ? 'Next.js 15 (App Router)' : a.framework;
-    const styling = [
+    let framework = a.framework === 'nextjs_app' ? 'Next.js 15 (App Router)' : a.framework;
+    if (a.framework === 'other' && a.frameworkOther) {
+      framework = a.frameworkOther;
+    }
+    
+    const stylingTools = [
       a.styling.tailwind ? 'Tailwind CSS v4' : null,
-      a.styling.shadcn ? 'shadcn/ui' : null,
-      a.styling.other
-    ].filter(Boolean).join(', ') || 'basic CSS';
+      a.styling.shadcn ? 'shadcn/ui' : null
+    ].filter(Boolean).join(' + ') || 'basic CSS';
     
     const appModels = a.ai.appModels?.join(', ') || 'TBD';
+    
+    // Build comprehensive design system description
+    const designSystemDetails = [];
+    if (a.styling.designPattern) {
+      designSystemDetails.push(`Design Pattern: ${a.styling.designPattern.replace(/-/g, ' ')}`);
+    }
+    
+    // Add detailed customization values if available
+    if (a.styling.customization) {
+      const c = a.styling.customization;
+      designSystemDetails.push(`\n**Exact Design Tokens (MUST USE THESE EXACT VALUES):**`);
+      designSystemDetails.push(`- Primary Color: ${c.primaryColor}`);
+      designSystemDetails.push(`- Secondary Color: ${c.secondaryColor}`);
+      designSystemDetails.push(`- Accent Color: ${c.accentColor}`);
+      designSystemDetails.push(`- Border Radius: ${c.borderRadiusValue}rem`);
+      designSystemDetails.push(`- Shadow: ${c.shadowXOffset}px ${c.shadowYOffset}px ${c.shadowBlur}px ${c.shadowSpread}px ${c.shadowColor}`);
+    }
+    
+    if (a.styling.darkMode) {
+      designSystemDetails.push('Dark Mode: Required');
+    }
+    designSystemDetails.push(`Color Scheme: ${a.styling.colorScheme}`);
+    designSystemDetails.push(`Border Radius Style: ${a.styling.borderRadius}`);
+    designSystemDetails.push(`Shadow Style: ${a.styling.shadowStyle}`);
+    designSystemDetails.push(`Animations: ${a.styling.animationStyle}`);
+    designSystemDetails.push(`Typography: ${a.styling.typography.replace(/-/g, ' ')}`);
+    designSystemDetails.push(`Spacing: ${a.styling.spacing}`);
+    
+    if (a.styling.other) {
+      designSystemDetails.push(`Additional Notes: ${a.styling.other}`);
+    }
     
     return `
 ## Project Context
@@ -176,12 +210,17 @@ export abstract class BaseAgent {
 
 **Tech Stack:**
 - Framework: ${framework}
-- Styling: ${styling}
+- Styling Tools: ${stylingTools}
 - Backend: ${a.backend.useVercel ? 'Vercel' : 'Custom'}
 - Database: ${a.backend.db}
 - Auth: ${a.backend.auth}
 - AI: ${a.ai.vercelAISDK ? `Vercel AI SDK 5 (models: ${appModels})` : 'TBD'}
 - IDE/Copilot: ${a.ai.copilot}
+
+**Design System Guidelines:**
+${designSystemDetails.map(detail => `- ${detail}`).join('\n')}
+
+**CRITICAL: All components, layouts, and UI elements MUST strictly follow the design system guidelines above. The visual design pattern defines the aesthetic language - use appropriate colors, shadows, borders, animations, and spacing as specified.**
 
 **Testing:**
 - Unit: ${a.testing.unit}

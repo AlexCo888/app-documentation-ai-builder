@@ -11,11 +11,12 @@ import { Switch } from '@/components/ui/switch';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn, inferSelectionsFromIdea } from '@/lib/utils';
-import type { Answers, FrameworkChoice, DBChoice, IDECopilot } from '@/lib/types';
+import type { Answers, FrameworkChoice, DBChoice, IDECopilot, DesignPattern, DesignCustomization, ColorScheme, BorderRadius, ShadowStyle, AnimationStyle, TypographyStyle } from '@/lib/types';
 import type { LucideIcon } from 'lucide-react';
-import { ArrowRight, CircuitBoard, Cpu, Database, Rocket, Sparkles, Workflow, Check, ChevronDown, Loader2, ExternalLink, Search, X } from 'lucide-react';
+import { ArrowRight, CircuitBoard, Cpu, Database, Rocket, Sparkles, Workflow, Check, ChevronDown, Loader2, ExternalLink, Search, X, Palette } from 'lucide-react';
 import { Sources, SourcesTrigger, SourcesContent, Source } from '@/components/ai-elements/sources';
 import { PRDAgentSelector, type PRDAgentSelection } from '@/components/PRDAgentSelector';
+import { DesignPatternShowcase } from '@/components/DesignPatternShowcase';
 
 type AuthChoice = 'none' | 'you-choose' | 'supabase_auth' | 'authjs' | 'clerk' | 'other' | 'better-auth';
 
@@ -29,9 +30,10 @@ type Step = {
 const steps: Step[] = [
   { id: 1, label: 'Define', blurb: 'Describe your product requirements and constraints.', icon: Sparkles },
   { id: 2, label: 'Configure', blurb: 'Choose your tech stack, hosting, database, and authentication.', icon: CircuitBoard },
-  { id: 3, label: 'Select Agents', blurb: 'Choose which specialized AI agents will generate your PRD.', icon: Cpu },
-  { id: 4, label: 'Select Models', blurb: 'Pick AI models from Vercel AI Gateway for generation.', icon: Workflow },
-  { id: 5, label: 'Generate', blurb: 'Create PRD documentation, MCP manifest, and implementation plan.', icon: Rocket }
+  { id: 3, label: 'Styling', blurb: 'Define your visual design language and component aesthetics.', icon: Palette },
+  { id: 4, label: 'Select Agents', blurb: 'Choose which specialized AI agents will generate your PRD.', icon: Cpu },
+  { id: 5, label: 'Select Models', blurb: 'Pick AI models from Vercel AI Gateway for generation.', icon: Workflow },
+  { id: 6, label: 'Generate', blurb: 'Create PRD documentation, MCP manifest, and implementation plan.', icon: Rocket }
 ];
 
 const frameworkOptions: Array<{ value: FrameworkChoice; label: string; note: string }> = [
@@ -303,8 +305,21 @@ export default function Questionnaire({
   const inferred = useMemo(() => inferSelectionsFromIdea(idea), [idea]);
 
   const [framework, setFramework] = useState<FrameworkChoice>('nextjs_app');
+  const [frameworkOther, setFrameworkOther] = useState('');
+  
+  // Styling states
   const [tailwind, setTailwind] = useState(true);
   const [shadcn, setShadcn] = useState(true);
+  const [designPattern, setDesignPattern] = useState<DesignPattern>();
+  const [customization, setCustomization] = useState<DesignCustomization>();
+  const [previewTheme, setPreviewTheme] = useState<'light' | 'dark'>('light'); // Local theme for preview cards only
+  const [darkMode, setDarkMode] = useState(true);
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('vibrant');
+  const [borderRadius, setBorderRadius] = useState<BorderRadius>('rounded');
+  const [shadowStyle, setShadowStyle] = useState<ShadowStyle>('soft');
+  const [animationStyle, setAnimationStyle] = useState<AnimationStyle>('smooth');
+  const [typography, setTypography] = useState<TypographyStyle>('modern-sans');
+  const [spacing, setSpacing] = useState<'compact' | 'comfortable' | 'spacious'>('comfortable');
   const [stylingOther, setStylingOther] = useState('');
 
   const [useVercel, setUseVercel] = useState(true);
@@ -516,7 +531,7 @@ export default function Questionnaire({
   }, [docGenerationModel, defaultModel]);
 
   function next() {
-    setStep((current) => Math.min(5, current + 1));
+    setStep((current) => Math.min(6, current + 1));
   }
 
   function back() {
@@ -527,8 +542,22 @@ export default function Questionnaire({
     const answers: Answers = {
       idea,
       framework,
+      frameworkOther: framework === 'other' && frameworkOther ? frameworkOther : undefined,
       wantsNextStructure: true,
-      styling: { tailwind, shadcn, other: stylingOther || undefined },
+      styling: { 
+        tailwind, 
+        shadcn, 
+        designPattern,
+        customization,
+        darkMode,
+        colorScheme,
+        borderRadius,
+        shadowStyle,
+        animationStyle,
+        typography,
+        spacing,
+        other: stylingOther || undefined 
+      },
       backend: { useVercel, db, auth },
       ai: {
         vercelAISDK: useAISDK,
@@ -775,44 +804,24 @@ export default function Questionnaire({
             })}
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)]">
-            <div className="space-y-4 rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] p-6">
-              <Label className="text-sm font-semibold text-[hsl(var(--color-foreground))]">Styling DNA</Label>
-              <div className="flex flex-wrap gap-3 text-sm">
-                <button
-                  type="button"
-                  onClick={() => setTailwind((prev) => !prev)}
-                  className={cn(
-                    'rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-200',
-                    tailwind
-                      ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.18)] text-[hsl(var(--color-primary))]'
-                      : 'border-[hsl(var(--color-border)/0.6)] text-[hsl(var(--color-muted-foreground))] hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:text-[hsl(var(--color-foreground))]'
-                  )}
-                >
-                  Tailwind
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShadcn((prev) => !prev)}
-                  className={cn(
-                    'rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-200',
-                    shadcn
-                      ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.18)] text-[hsl(var(--color-primary))]'
-                      : 'border-[hsl(var(--color-border)/0.6)] text-[hsl(var(--color-muted-foreground))] hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:text-[hsl(var(--color-foreground))]'
-                  )}
-                >
-                  shadcn/ui
-                </button>
-              </div>
+          {framework === 'other' && (
+            <div className="space-y-2 rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] p-6">
+              <Label className="text-sm font-semibold text-[hsl(var(--color-foreground))]">
+                Describe your tech stack
+              </Label>
               <Input
-                value={stylingOther}
-                onChange={(event) => setStylingOther(event.target.value)}
-                placeholder="Extra styling notes (tokens, theming, etc.)"
-                className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)]"
+                value={frameworkOther}
+                onChange={(event) => setFrameworkOther(event.target.value)}
+                placeholder="e.g., Python + Flask, Ruby on Rails, Laravel, etc."
+                className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)] text-[hsl(var(--color-foreground))] placeholder:text-[hsl(var(--color-muted-foreground))]"
               />
+              <p className="text-xs text-[hsl(var(--color-muted-foreground))]">
+                Let us know what framework, language, or backend you're planning to use.
+              </p>
             </div>
+          )}
 
-            <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2 rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] p-5">
                 <Label className="text-sm font-semibold text-[hsl(var(--color-foreground))]">Database</Label>
                 <Select value={db} onValueChange={(value) => setDb(value as DBChoice)}>
@@ -872,18 +881,127 @@ export default function Questionnaire({
                 </span>
               </button>
             </div>
-          </div>
         </section>
       )}
 
       {step === 3 && (
+        <section className="space-y-8 rounded-[calc(var(--radius-lg)+0.75rem)] border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.8)] p-8 shadow-[0_25px_60px_-40px_hsl(var(--shadow))] backdrop-blur-xl">
+          {/* Design Pattern Showcase */}
+          <div className="space-y-4">
+            <div className="flex flex-col items-center gap-4">
+              <div className="text-center">
+                <h2 className="text-2xl font-semibold text-[hsl(var(--color-foreground))]">Choose Your Design Language</h2>
+                <p className="text-sm text-[hsl(var(--color-muted-foreground))]">
+                  Select a visual pattern that defines your app's aesthetic. This guides the AI in generating consistent, beautiful components.
+                </p>
+              </div>
+              
+              {/* Preview Theme Toggle */}
+              <div className="flex items-center gap-3 rounded-full border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] px-4 py-2">
+                <span className={cn(
+                  "text-xs font-medium transition-colors",
+                  previewTheme === 'light' ? 'text-[hsl(var(--color-foreground))]' : 'text-[hsl(var(--color-muted-foreground))]'
+                )}>
+                  ☀️ Light
+                </span>
+                <Switch 
+                  checked={previewTheme === 'dark'} 
+                  onCheckedChange={(checked) => setPreviewTheme(checked ? 'dark' : 'light')}
+                />
+                <span className={cn(
+                  "text-xs font-medium transition-colors",
+                  previewTheme === 'dark' ? 'text-[hsl(var(--color-foreground))]' : 'text-[hsl(var(--color-muted-foreground))]'
+                )}>
+                  🌙 Dark
+                </span>
+              </div>
+            </div>
+            
+            <DesignPatternShowcase
+              selected={designPattern}
+              onChange={setDesignPattern}
+              onCustomizationChange={setCustomization}
+              theme={previewTheme}
+              colorScheme={colorScheme}
+              borderRadius={borderRadius}
+              shadowStyle={shadowStyle}
+              animationStyle={animationStyle}
+              typography={typography}
+              spacing={spacing}
+              onColorSchemeChange={setColorScheme}
+              onBorderRadiusChange={setBorderRadius}
+              onShadowStyleChange={setShadowStyle}
+              onAnimationStyleChange={setAnimationStyle}
+              onTypographyChange={setTypography}
+              onSpacingChange={setSpacing}
+            />
+          </div>
+
+          {/* Styling Configuration */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Styling Tools */}
+            <div className="space-y-4 rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] p-6">
+              <Label className="text-sm font-semibold text-[hsl(var(--color-foreground))]">Styling Tools</Label>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => setTailwind((prev) => !prev)}
+                  className={cn(
+                    'rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-200',
+                    tailwind
+                      ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.18)] text-[hsl(var(--color-primary))]'
+                      : 'border-[hsl(var(--color-border)/0.6)] text-[hsl(var(--color-muted-foreground))] hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:text-[hsl(var(--color-foreground))]'
+                  )}
+                >
+                  Tailwind CSS
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShadcn((prev) => !prev)}
+                  className={cn(
+                    'rounded-full border px-3 py-1.5 text-sm font-medium transition-all duration-200',
+                    shadcn
+                      ? 'border-[hsl(var(--color-primary))] bg-[hsl(var(--color-primary)/0.18)] text-[hsl(var(--color-primary))]'
+                      : 'border-[hsl(var(--color-border)/0.6)] text-[hsl(var(--color-muted-foreground))] hover:border-[hsl(var(--color-ring-soft)/0.45)] hover:text-[hsl(var(--color-foreground))]'
+                  )}
+                >
+                  shadcn/ui
+                </button>
+              </div>
+            </div>
+
+            {/* Dark Mode */}
+            <div className="flex items-center justify-between rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] p-6">
+              <div className="space-y-1">
+                <Label className="text-sm font-semibold text-[hsl(var(--color-foreground))]">Dark Mode Support</Label>
+                <p className="text-xs text-[hsl(var(--color-muted-foreground))]">Include dark theme implementation</p>
+              </div>
+              <Switch checked={darkMode} onCheckedChange={setDarkMode} />
+            </div>
+          </div>
+
+
+          {/* Additional Notes */}
+          <div className="space-y-2 rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.65)] p-6">
+            <Label className="text-sm font-semibold text-[hsl(var(--color-foreground))]">Additional Styling Notes</Label>
+            <Input
+              value={stylingOther}
+              onChange={(event) => setStylingOther(event.target.value)}
+              placeholder="Any specific design tokens, theming requirements, accessibility needs, etc."
+              className="rounded-2xl border-none bg-[hsl(var(--color-muted)/0.4)]"
+            />
+          </div>
+        </section>
+      )}
+
+      {step === 4 && (
         <section className="space-y-8 rounded-[calc(var(--radius-lg)+0.75rem)] border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.82)] p-8 shadow-[0_25px_60px_-40px_hsl(var(--shadow))] backdrop-blur-xl">
           {/* PRD Agent Selection */}
           <PRDAgentSelector selected={prdAgents} onChange={setPrdAgents} />
         </section>
       )}
 
-      {step === 4 && (
+      {step === 5 && (
         <section className="space-y-8 rounded-[calc(var(--radius-lg)+0.75rem)] border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.82)] p-8 shadow-[0_25px_60px_-40px_hsl(var(--shadow))] backdrop-blur-xl">
           {/* Documentation Generation Model */}
           <div className="space-y-4 rounded-3xl border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.75)] p-6">
@@ -1247,7 +1365,7 @@ export default function Questionnaire({
         </section>
       )}
 
-      {step === 5 && (
+      {step === 6 && (
         <section className="space-y-6 rounded-[calc(var(--radius-lg)+0.75rem)] border border-[hsl(var(--color-border)/0.6)] bg-[hsl(var(--color-card)/0.85)] p-8 shadow-[0_25px_60px_-40px_hsl(var(--shadow))] backdrop-blur-xl">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {[
@@ -1316,7 +1434,7 @@ export default function Questionnaire({
           Back
         </Button>
         <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-          {step < 5 && (
+          {step < 6 && (
             <Button
               onClick={next}
               className="w-full justify-center gap-2 rounded-full bg-[hsl(var(--color-primary))] text-[hsl(var(--color-primary-foreground))] hover:bg-[hsl(var(--color-primary)/0.9)] sm:w-auto"
@@ -1325,7 +1443,7 @@ export default function Questionnaire({
               <ArrowRight className="size-4" />
             </Button>
           )}
-          {step === 5 && (
+          {step === 6 && (
             <Button
               onClick={finish}
               className="w-full justify-center gap-2 rounded-full bg-[hsl(var(--color-primary))] text-[hsl(var(--color-primary-foreground))] hover:bg-[hsl(var(--color-primary)/0.9)] sm:w-auto"
