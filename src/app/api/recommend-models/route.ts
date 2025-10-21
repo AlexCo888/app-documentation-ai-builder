@@ -3,6 +3,7 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 
 export const runtime = 'edge';
+export const maxDuration = 300; // 60s for AI model recommendation with web search
 
 // Define Zod schema for model recommendations
 const recommendationsSchema = z.object({
@@ -25,6 +26,10 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Create abort controller with timeout
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 55000); // 55s timeout (before maxDuration)
 
     const prompt = `You are an expert AI architect helping developers choose the right AI models for their application.
 
@@ -129,6 +134,7 @@ Return model IDs in exact format: provider/model-name`;
       model: 'openai/gpt-5',
       schema: recommendationsSchema,
       prompt,
+      abortSignal: abortController.signal,
       providerOptions: {
         openai: {
           includeWebSearch: {
@@ -142,12 +148,23 @@ Return model IDs in exact format: provider/model-name`;
       }
     });
 
+    clearTimeout(timeoutId); // Clean up timeout
+
     return NextResponse.json({
       ok: true,
       recommendations: result.recommendations
     });
   } catch (error: unknown) {
     console.error('Recommend models error:', error);
+    
+    // Handle timeout/abort errors
+    if (error instanceof Error && error.name === 'AbortError') {
+      return NextResponse.json(
+        { ok: false, error: 'Request timed out. Please try again.' },
+        { status: 408 }
+      );
+    }
+    
     const message = error instanceof Error ? error.message : 'Failed to recommend models';
     return NextResponse.json(
       { ok: false, error: message },

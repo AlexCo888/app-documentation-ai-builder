@@ -2,11 +2,26 @@ import { NextResponse } from 'next/server';
 import { gateway } from '@ai-sdk/gateway';
 
 export const runtime = 'edge';
+export const maxDuration = 300; // 30s for fetching available models from gateway
 
 export async function GET() {
   try {
-    // Fetch available models from AI Gateway
-    const result = await gateway.getAvailableModels();
+    // Create abort controller with timeout
+    const abortController = new AbortController();
+    const timeoutId = setTimeout(() => abortController.abort(), 25000); // 25s timeout (before maxDuration)
+
+    // Fetch available models from AI Gateway with timeout
+    const resultPromise = gateway.getAvailableModels();
+    const result = await Promise.race([
+      resultPromise,
+      new Promise<never>((_, reject) => {
+        abortController.signal.addEventListener('abort', () => {
+          reject(new Error('Request timed out'));
+        });
+      })
+    ]);
+
+    clearTimeout(timeoutId); // Clean up timeout
     
     // Filter to only language models (not embeddings)
     const languageModels = result.models.filter(
@@ -31,6 +46,15 @@ export async function GET() {
     });
   } catch (error: unknown) {
     console.error('Failed to fetch available models:', error);
+    
+    // Handle timeout errors
+    if (error instanceof Error && (error.message === 'Request timed out' || error.name === 'AbortError')) {
+      return NextResponse.json(
+        { ok: false, error: 'Request timed out while fetching models. Please try again.' },
+        { status: 408 }
+      );
+    }
+    
     const message = error instanceof Error ? error.message : 'Failed to fetch models';
     
     // Return error with helpful message
