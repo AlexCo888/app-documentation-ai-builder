@@ -247,7 +247,7 @@ export default function Page() {
                 </p>
               </div>
               <p className="mt-4 text-center text-xs text-[hsl(var(--color-muted-foreground))]">
-                This may take 5-10 minutes for complex projects. Real-time updates will appear above.
+                Agents run in parallel for faster generation (~3-5 minutes). Real-time updates appear above.
               </p>
             </div>
           </CardContent>

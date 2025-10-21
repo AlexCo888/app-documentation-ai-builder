@@ -8,7 +8,7 @@ import {
 } from '@/lib/agents';
 
 export const runtime = 'nodejs'; // Node.js runtime for longer-running operations
-export const maxDuration = 800; // 10 minutes for agent swarm execution
+export const maxDuration = 300; // 5 minutes - stays within Pro plan default (no extra cost)
 
 // Helper to create SSE-formatted message
 function sseMessage(event: string, data: unknown): string {
@@ -44,15 +44,15 @@ export async function POST(req: NextRequest) {
       console.log('🚀 Starting agent-based PRD generation...');
       await sendEvent('progress', { step: 'starting', message: 'Initializing agent swarm...' });
 
-      // Create abort controller with timeout (790s, before maxDuration of 800s)
+      // Create abort controller with timeout (290s, before maxDuration of 300s)
       const abortController = new AbortController();
-      const timeoutId = setTimeout(() => abortController.abort(), 790000);
+      const timeoutId = setTimeout(() => abortController.abort(), 290000);
 
       // Wrap all operations with timeout handling
       const generateWithTimeout = async () => {
-        await sendEvent('progress', { step: 'prd', message: 'Generating PRD with specialized agents...' });
+        await sendEvent('progress', { step: 'prd', message: 'Running agents in parallel waves for faster generation...' });
         
-        // Generate PRD using agent swarm
+        // Generate PRD using agent swarm (now parallelized)
         const { prd, context, summary } = await generatePRDWithAgents(
           answers,
           answers.docGenerationModel,
@@ -60,9 +60,9 @@ export async function POST(req: NextRequest) {
         );
 
         console.log('📝 PRD generated, creating supporting documents...');
-        await sendEvent('progress', { step: 'prd-complete', message: 'PRD complete. Generating supporting documents...' });
+        await sendEvent('progress', { step: 'prd-complete', message: 'PRD complete! Creating supporting documents...' });
 
-        await sendEvent('progress', { step: 'docs', message: 'Creating AGENTS.md, IMPLEMENTATION.md, MCP.md...' });
+        await sendEvent('progress', { step: 'docs', message: 'Generating AGENTS.md, IMPLEMENTATION.md, MCP.md...' });
 
         // Generate supporting documents using the PRD context
         const [agents, impl, mcp] = await Promise.all([
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       if (error instanceof Error && (error.message === 'Document generation timed out' || error.name === 'AbortError')) {
         await sendEvent('error', {
           ok: false,
-          error: 'Document generation timed out after 13 minutes. This may happen with very complex projects. Please try again or simplify your requirements.'
+          error: 'Document generation timed out after 5 minutes. Agents are running in parallel now. If this persists, try reducing the number of selected agents.'
         });
       } else {
         const message = error instanceof Error ? error.message : 'Unknown error';

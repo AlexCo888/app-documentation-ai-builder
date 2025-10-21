@@ -129,41 +129,89 @@ Return the outline in Markdown format with clear hierarchy.`;
   }
 
   /**
-   * Execute all agents in dependency order
+   * Group agents into parallel execution waves based on dependencies
+   */
+  private getExecutionWaves(): AgentRole[][] {
+    const waves: AgentRole[][] = [];
+    const completed = new Set<AgentRole>(['orchestrator']);
+    const remaining = new Set(this.agents.keys());
+    
+    while (remaining.size > 0) {
+      const wave: AgentRole[] = [];
+      
+      // Find all agents whose dependencies are satisfied
+      for (const role of remaining) {
+        const deps = AGENT_CAPABILITIES[role].dependencies;
+        const depsReady = deps.every(dep => completed.has(dep) || !remaining.has(dep));
+        
+        if (depsReady) {
+          wave.push(role);
+        }
+      }
+      
+      // No agents ready means circular dependency or error
+      if (wave.length === 0) break;
+      
+      // Add this wave and mark agents as completed
+      waves.push(wave);
+      wave.forEach(role => {
+        remaining.delete(role);
+        completed.add(role);
+      });
+    }
+    
+    return waves;
+  }
+
+  /**
+   * Execute all agents in parallel waves based on dependencies
    */
   private async executeAgents(): Promise<void> {
-    const executionOrder = this.getExecutionOrder();
+    const waves = this.getExecutionWaves();
     
-    console.log('🤖 Agent execution order:', executionOrder);
+    console.log(`🤖 Executing ${this.agents.size} agents in ${waves.length} parallel waves`);
+    waves.forEach((wave, i) => {
+      console.log(`  Wave ${i + 1}: [${wave.map(r => AGENT_CAPABILITIES[r].name).join(', ')}]`);
+    });
     
-    for (const role of executionOrder) {
-      const agent = this.agents.get(role);
-      if (!agent) continue;
-
-      console.log(`\n📋 Executing: ${AGENT_CAPABILITIES[role].name}`);
+    for (let i = 0; i < waves.length; i++) {
+      const wave = waves[i];
+      console.log(`\n🌊 Wave ${i + 1}/${waves.length}: Executing ${wave.length} agent(s) in parallel`);
       
-      try {
-        this.context.agentStates[role] = {
-          role,
-          status: 'working',
-          currentTask: `Generating ${role} section`
-        };
+      // Execute all agents in this wave in parallel
+      const wavePromises = wave.map(async (role) => {
+        const agent = this.agents.get(role);
+        if (!agent) return;
 
-        const output = await agent.execute();
+        console.log(`  📋 Starting: ${AGENT_CAPABILITIES[role].name}`);
         
-        // Store the output in context sections
-        this.context.sections[role] = output;
-        
-        console.log(`✅ Completed: ${AGENT_CAPABILITIES[role].name} (${output.length} chars)`);
-      } catch (error) {
-        console.error(`❌ Error in ${role}:`, error);
-        this.context.agentStates[role] = {
-          role,
-          status: 'error',
-          error: error instanceof Error ? error.message : 'Unknown error'
-        };
-        // Continue with other agents even if one fails
-      }
+        try {
+          this.context.agentStates[role] = {
+            role,
+            status: 'working',
+            currentTask: `Generating ${role} section`
+          };
+
+          const output = await agent.execute();
+          
+          // Store the output in context sections
+          this.context.sections[role] = output;
+          
+          console.log(`  ✅ Completed: ${AGENT_CAPABILITIES[role].name} (${output.length} chars)`);
+        } catch (error) {
+          console.error(`  ❌ Error in ${role}:`, error);
+          this.context.agentStates[role] = {
+            role,
+            status: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error'
+          };
+          // Continue with other agents even if one fails
+        }
+      });
+
+      // Wait for all agents in this wave to complete
+      await Promise.all(wavePromises);
+      console.log(`✅ Wave ${i + 1} complete`);
     }
   }
 
