@@ -8,7 +8,7 @@ import {
 } from '@/lib/agents';
 
 export const runtime = 'nodejs'; // Node.js runtime for longer-running operations
-export const maxDuration = 300; // 5 minutes - stays within Pro plan default (no extra cost)
+export const maxDuration = 600; // 10 minutes - allows agents to complete in parallel waves
 
 // Helper to create SSE-formatted message
 function sseMessage(event: string, data: unknown): string {
@@ -44,9 +44,9 @@ export async function POST(req: NextRequest) {
       console.log('🚀 Starting agent-based PRD generation...');
       await sendEvent('progress', { step: 'starting', message: 'Initializing agent swarm...' });
 
-      // Create abort controller with timeout (290s, before maxDuration of 300s)
+      // Create abort controller with timeout (590s, before maxDuration of 600s)
       const abortController = new AbortController();
-      const timeoutId = setTimeout(() => abortController.abort(), 290000);
+      const timeoutId = setTimeout(() => abortController.abort(), 590000);
 
       // Wrap all operations with timeout handling
       const generateWithTimeout = async () => {
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
       if (error instanceof Error && (error.message === 'Document generation timed out' || error.name === 'AbortError')) {
         await sendEvent('error', {
           ok: false,
-          error: 'Document generation timed out after 5 minutes. Agents are running in parallel now. If this persists, try reducing the number of selected agents.'
+          error: 'Document generation timed out after 10 minutes. Agents are running in parallel waves. If this persists, try using a faster model like gpt-5-mini.'
         });
       } else {
         const message = error instanceof Error ? error.message : 'Unknown error';

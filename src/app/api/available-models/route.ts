@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { gateway } from '@ai-sdk/gateway';
 
 export const runtime = 'nodejs';
-export const maxDuration = 300; // 5 minutes for fetching available models from gateway
+export const maxDuration = 600; // 5 minutes for fetching available models from gateway
 
 export async function GET() {
   try {

@@ -17,13 +17,15 @@ export async function genText({
   prompt,
   userId,
   tags,
-  webSearch
+  webSearch,
+  timeoutMs = 360000 // 6 minutes default per agent
 }: {
   model?: string;
   prompt: string;
   userId?: string;
   tags?: string[];
   webSearch?: WebSearchLevel;
+  timeoutMs?: number;
 }) {
   const modelId = (model ?? DEFAULT_MODEL) as GatewayModelId;
 
@@ -43,12 +45,21 @@ export async function genText({
     };
   }
 
-  const { text } = await generateText({
-    model: modelId,
-    prompt,
-    providerOptions
-  });
-  return text;
+  // Create abort controller with timeout
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(() => abortController.abort(), timeoutMs);
+
+  try {
+    const { text } = await generateText({
+      model: modelId,
+      prompt,
+      providerOptions,
+      abortSignal: abortController.signal
+    });
+    return text;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 export async function genObject<T extends z.ZodType>({

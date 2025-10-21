@@ -3,7 +3,7 @@ import { generateObject } from 'ai';
 import { z } from 'zod';
 
 export const runtime = 'nodejs';
-export const maxDuration = 300; // 5 minutes for AI model recommendation with web search
+export const maxDuration = 600; // 5 minutes for AI model recommendation with web search
 
 // Define Zod schema for model recommendations
 const recommendationsSchema = z.object({
