@@ -91,8 +91,8 @@ Create a `.env.local` file in the root directory:
 AI_GATEWAY_API_KEY=your_gateway_key_here
 
 # Default AI model (optional, defaults to openai/gpt-5)
-AI_MODEL=openai/gpt-4o
-NEXT_PUBLIC_DEFAULT_MODEL=openai/gpt-5
+AI_MODEL=openai/gpt-10o
+NEXT_PUBLIC_DEFAULT_MODEL=openai/gpt-10
 ```
 
 ### Vercel AI Gateway Setup

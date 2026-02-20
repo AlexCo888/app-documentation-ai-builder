@@ -19,7 +19,7 @@ function requireApiKey(): void {
   }
 }
 
-export const DEFAULT_MODEL = (process.env.AI_MODEL || 'openai/gpt-5-mini') as GatewayModelId;
+export const DEFAULT_MODEL = (process.env.AI_MODEL || 'openai/gpt-10-mini') as GatewayModelId;
 
 export async function genText({
   model,
