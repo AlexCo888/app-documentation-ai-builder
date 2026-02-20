@@ -9,7 +9,16 @@ type ProviderOptions = Record<string, Record<string, JsonValue>>;
 
 // Model auto-routes via Vercel AI Gateway with 'provider/model' strings.
 // Docs: https://ai-sdk.dev/providers/ai-sdk-providers/ai-gateway
-// On Vercel: OIDC auth (no key). Local: `vercel dev` or set AI_GATEWAY_API_KEY.
+// REQUIRES AI_GATEWAY_API_KEY - OIDC auth is disabled.
+function requireApiKey(): void {
+  if (!process.env.AI_GATEWAY_API_KEY) {
+    throw new Error(
+      'AI_GATEWAY_API_KEY is required. Set it in your environment variables. ' +
+      'Create one at: Vercel Dashboard > AI Gateway > API Keys'
+    );
+  }
+}
+
 export const DEFAULT_MODEL = (process.env.AI_MODEL || 'openai/gpt-5-mini') as GatewayModelId;
 
 export async function genText({
@@ -27,6 +36,7 @@ export async function genText({
   webSearch?: WebSearchLevel;
   timeoutMs?: number;
 }) {
+  requireApiKey();
   const modelId = (model ?? DEFAULT_MODEL) as GatewayModelId;
 
   const providerOptions: ProviderOptions = {
@@ -75,6 +85,7 @@ export async function genObject<T extends z.ZodType>({
   userId?: string;
   tags?: string[];
 }) {
+  requireApiKey();
   const modelId = (model ?? DEFAULT_MODEL) as GatewayModelId;
   const result = await generateObject({
     model: modelId,
